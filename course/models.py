@@ -1,8 +1,12 @@
 from django.db import models
-from student.models import Student
+#from student.models import Student
+from teacher.models import Teacher
 
 
 class Course(models.Model):
+    class Meta:
+        db_table = 'course'
+
     name = models.CharField(max_length=30)
     degree = models.CharField(max_length=20)
     course_load = models.IntegerField()
@@ -10,37 +14,84 @@ class Course(models.Model):
 
 
 class Discipline(models.Model):
+    class Meta:
+        db_table = 'discipline'
+
     name = models.CharField(max_length=30)
     code = models.CharField(max_length=15)
     workload_in_clock = models.IntegerField()
     workload_in_class = models.IntegerField()
     is_optional = models.BooleanField()
-    courses = models.ManyToManyField(Course)
+
+
+class CourseDiscipline(models.Model):
+    class Meta:
+        db_table = 'course_discipline'
+
+    discipline_id = models.ForeignKey(Discipline, on_delete=models.DO_NOTHING, db_column='discipline_id')
+    course_id = models.ForeignKey(Course, on_delete=models.DO_NOTHING, db_column='course_id')
+    period = models.IntegerField()
 
 
 class Class(models.Model):
+    class Meta:
+        db_table = 'class'
+
     class Shift(models.TextChoices):
         MATUTINO = 'Manhã'
         VESPERTINO = 'Tarde'
         NOTURNO = 'Noite'
     
-    class_leader = models.ForeignKey(Student, on_delete=models.DO_NOTHING, blank=True, null=True)
-    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING)
+    #class_leader = models.ForeignKey(Student, on_delete=models.DO_NOTHING, blank=True, null=True)
+    course_id = models.ForeignKey(Course, on_delete=models.DO_NOTHING, db_column='course_id')
     reference_period = models.IntegerField()
     shift = models.CharField(max_length=10, choices=Shift.choices)
 
 
 class Schedule(models.Model):
-    discipline = models.ForeignKey(Discipline, on_delete=models.DO_NOTHING)
+    class Meta:
+        db_table = 'schedule'
+
+    discipline_id = models.ForeignKey(Discipline, on_delete=models.DO_NOTHING, db_column='discilpine_id')
     quantity = models.IntegerField()
     weekday = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
-    schedule_class = models.ForeignKey(Class, on_delete=models.CASCADE)
+    class_id = models.ForeignKey(Class, on_delete=models.CASCADE, db_column='class_id')
 
 
 class ClassCanceled(models.Model):
-    schedule = models.ForeignKey(Schedule, on_delete=models.DO_NOTHING)
+    class Meta:
+        db_table = 'class_canceled'
+
+    schedule_id = models.ForeignKey(Schedule, on_delete=models.DO_NOTHING, db_column='schedule_id')
     canceled_date = models.DateField()
     reason = models.TextField(max_length=200, blank=True, null=True)
     is_avaible = models.BooleanField()
+
+
+class Teach(models.Model):
+    class Meta:
+        db_table = 'teach'
+
+    teacher_id = models.ForeignKey(Teacher, on_delete=models.CASCADE, db_column='student_id')
+    discipline_id = models.ForeignKey(Discipline, on_delete=models.CASCADE, db_column='discipline_id')
+    class_id = models.ForeignKey(Class, on_delete=models.CASCADE, db_column='class_id')
+
+
+class SubstituteTeachers(models.Model):
+    class Meta:
+        db_table = 'substitute_teachers'
+
+    teacher_id = models.ForeignKey(Teacher, on_delete=models.CASCADE, db_column='teacher_id')
+    class_canceled_id = models.ForeignKey(ClassCanceled, on_delete=models.CASCADE, db_column='class_canceled_id')
+
+
+class TeachTemporarily(models.Model):
+    class Meta:
+        db_table = 'teach_temporarily'
+
+    class_canceled_id = models.ForeignKey(ClassCanceled, on_delete=models.DO_NOTHING, db_column='class_canceled_id')
+    quantity = models.IntegerField()
+    teacher_id = models.ForeignKey(Teacher, on_delete=models.DO_NOTHING, db_column='teacher_id')
+    discipline_id = models.ForeignKey(Discipline, on_delete=models.DO_NOTHING, db_column='discipline_id')
