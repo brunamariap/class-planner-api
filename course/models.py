@@ -12,6 +12,8 @@ class Course(models.Model):
     course_load = models.IntegerField()
     byname = models.CharField(max_length=10)  
 
+    def __str__(self):
+        return self.name
 
 class Discipline(models.Model):
     class Meta:
