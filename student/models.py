@@ -6,7 +6,7 @@ class Student(models.Model):
     class Meta:
         db_table = 'student'
 
-    registration = models.CharField(max_length=32)
+    registration = models.CharField(max_length=32, unique=True)
     name = models.CharField(max_length=200)
     avatar = models.ImageField(null=True)
     class_id = models.ForeignKey(Class, on_delete=models.DO_NOTHING, db_column='class_id')

@@ -21,18 +21,6 @@ class ClassViewSet(ModelViewSet):
 
         course_data = Course.objects.get(id=request.data.get("course_id"))
         
-        shift = request.data.get("shift")
-        reference_period = request.data.get("reference_period")
-
-        class_shift = Class.objects.filter(shift=shift, reference_period=reference_period)
-        
-        if (len(class_shift) > 0):
-            return Response(
-                {
-                    "message": "Já existe uma turma com esse período e turno"
-                }, status=status.HTTP_400_BAD_REQUEST
-            )
-    
         try:
             serializer = self.get_serializer(data=request.data) 
             serializer.is_valid(raise_exception=True)
