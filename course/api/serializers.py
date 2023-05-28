@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Course, Discipline, Class
+from ..models import Course, Discipline, Class, Schedule
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -15,7 +15,7 @@ class DisciplineSerializer(serializers.ModelSerializer):
 
 
 class ClassSerializer(serializers.ModelSerializer):
-    course_id = CourseSerializer(read_only=True)
+    # course_id = CourseSerializer(read_only=True)
 
     class Meta:
         model = Class
@@ -23,4 +23,8 @@ class ClassSerializer(serializers.ModelSerializer):
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
-    pass
+    discipline = CourseSerializer(read_only=True)
+    schedule_class = CourseSerializer(read_only=True)
+    class Meta:
+        model = Schedule
+        fields = ['id', 'quantity', 'start_time', 'end_time', 'discipline', 'schedule_class']

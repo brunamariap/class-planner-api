@@ -8,7 +8,7 @@ class Student(models.Model):
 
     registration = models.CharField(max_length=32)
     name = models.CharField(max_length=200)
-    avatar = models.ImageField()
+    avatar = models.ImageField(null=True)
     class_id = models.ForeignKey(Class, on_delete=models.DO_NOTHING, db_column='class_id')
     disciplines = models.ManyToManyField(Discipline) 
 
@@ -21,6 +21,7 @@ class Student(models.Model):
 class StudentAlert(models.Model):
     class Meta:
         db_table = 'student_alert'
+    
     discipline_id = models.ForeignKey(Discipline, on_delete=models.DO_NOTHING, db_column='discipline_id')
     student_id = models.ForeignKey(Student, on_delete=models.DO_NOTHING, db_column='student_id')
     created_at = models.DateTimeField(auto_now_add=True)

@@ -18,5 +18,6 @@ env.bak/
 venv.bak/
 env*
 */.env
+.vscode
 #other
 # *.bat

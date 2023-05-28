@@ -7,7 +7,7 @@ class Course(models.Model):
     class Meta:
         db_table = 'course'
 
-    name = models.CharField(max_length=30)
+    name = models.CharField(max_length=50)
     degree = models.CharField(max_length=20)
     course_load = models.IntegerField()
     byname = models.CharField(max_length=10)  
@@ -54,7 +54,7 @@ class Schedule(models.Model):
     class Meta:
         db_table = 'schedule'
 
-    discipline_id = models.ForeignKey(Discipline, on_delete=models.DO_NOTHING, db_column='discilpine_id')
+    discipline_id = models.ForeignKey(Discipline, on_delete=models.DO_NOTHING, db_column='discipline_id')
     quantity = models.IntegerField()
     weekday = models.DateField()
     start_time = models.TimeField()
