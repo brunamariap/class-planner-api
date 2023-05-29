@@ -67,14 +67,13 @@ class ClassCanceled(models.Model):
     schedule_id = models.ForeignKey(Schedule, on_delete=models.CASCADE, db_column='schedule_id')
     canceled_date = models.DateField()
     reason = models.TextField(max_length=200, blank=True, null=True)
-    is_avaible = models.BooleanField()
-
+    is_available = models.BooleanField()
 
 class Teach(models.Model):
     class Meta:
         db_table = 'teach'
 
-    teacher_id = models.ForeignKey(Teacher, on_delete=models.CASCADE, db_column='student_id')
+    teacher_id = models.ForeignKey(Teacher, on_delete=models.CASCADE, db_column='teacher_id')
     discipline_id = models.ForeignKey(Discipline, on_delete=models.CASCADE, db_column='discipline_id')
     class_id = models.ForeignKey(Class, on_delete=models.CASCADE, db_column='class_id')
 
