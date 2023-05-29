@@ -1,5 +1,9 @@
 from rest_framework.viewsets import ModelViewSet
 from ..models import Teacher
+
+from course.models import Discipline, Class, Teach
+from course.api.serializers import DisciplineSerializer, ClassSerializer
+
 from .serializers import TeacherSerializer
 from course.api.serializers import TeachSerializer
 
@@ -11,10 +15,16 @@ class TeacherViewSet(ModelViewSet):
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer
 
-    # @action(methods=['get'], detail=False, url_path='disciplines')
-    # def getTeacherDisciplines(self, request):
-    #     pass
+    @action(methods=['get'], detail=False, url_path='<id:teacher>/disciplines')
+    def getTeacherDisciplines(self, request):
+        id = request.data.get('id')
+        teach = Teach.objects.get(teacher_id=id)
+        disciplines = Discipline.objects.get(teach=teach)
 
+        serializer = DisciplineSerializer(disciplines, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
     @action(methods=['post'], detail=False, url_path='disciplines')
     def createTeacherBinding(self, request):
         serializer = TeachSerializer(data=request.data)
