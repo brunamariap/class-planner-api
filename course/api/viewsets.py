@@ -1,5 +1,5 @@
 from rest_framework.viewsets import ModelViewSet
-from ..models import Course, Class, Discipline
+from ..models import Course, Class, Discipline, CourseDiscipline
 from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,11 +13,27 @@ class DisciplineViewSet(ModelViewSet):
     queryset = Discipline.objects.all()
     serializer_class = DisciplineSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        courses_length = request.data['course_period']
+        
+        serializer.save()
+        for i in range(len(courses_length)):
+            course_create = CourseDiscipline.objects.create(discipline_id=Discipline.objects.all().last(),
+                                                            course_id=Course.objects.get(id=request.data['course_period'][i]['course_id']),
+                                                            period=request.data['course_period'][i]['period']) 
+            course_create.save()
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
 class ClassViewSet(ModelViewSet):
     queryset = Class.objects.all()
     serializer_class = ClassSerializer
 
-    def create(self, request, *args, **kwargs):
+    """ def create(self, request, *args, **kwargs):
 
         course_data = Course.objects.get(id=request.data.get("course_id"))
         
@@ -35,4 +51,4 @@ class ClassViewSet(ModelViewSet):
             )
 
         except:
-            pass
+            pass """

@@ -51,6 +51,8 @@ class Class(models.Model):
     reference_period = models.IntegerField()
     shift = models.CharField(max_length=10, choices=Shift.choices)
 
+    def __str__(self):
+        return f'{self.course_id}, {self.reference_period}, {self.shift}'
 
 class Schedule(models.Model):
     class Meta:
