@@ -1,6 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
-from ..models import Course, Class, Discipline, CourseDiscipline
-from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer
+from rest_framework.decorators import action
+from ..models import Course, Class, Discipline, CourseDiscipline, Schedule
+from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer, ScheduleSerializer
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -51,4 +52,15 @@ class ClassViewSet(ModelViewSet):
             )
 
         except:
-            pass """
+            pass
+
+    # def getWeekSchedules():
+    #     schedules = Schedule.objects.all()
+
+    # @action(methods=['get'], detail=False, url_path='<teacher_id:teacher>/schedules/week')
+    # def getTeacherSchedules(self, request):
+        
+    #     schedules = Schedule.objects.get()
+    #     serializer = ScheduleSerializer()
+
+    #     return Response(serializer.data, status=status.HTTP_200_OK)"""
