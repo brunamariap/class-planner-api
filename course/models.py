@@ -22,7 +22,11 @@ class Discipline(models.Model):
     workload_in_clock = models.IntegerField()
     workload_in_class = models.IntegerField()
     is_optional = models.BooleanField()
+    courses = models.ManyToManyField(Course, related_name='course_disciplines', through='CourseDiscipline', through_fields=('discipline_id', 'course_id', 'period'))
 
+    def __str__(self):
+        return self.name
+    
 
 class CourseDiscipline(models.Model):
     class Meta:
@@ -47,6 +51,8 @@ class Class(models.Model):
     reference_period = models.IntegerField()
     shift = models.CharField(max_length=10, choices=Shift.choices)
 
+    def __str__(self):
+        return f'{self.course_id}, {self.reference_period}, {self.shift}'
 
 class Schedule(models.Model):
     class Meta:
