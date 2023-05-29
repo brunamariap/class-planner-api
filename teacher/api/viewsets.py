@@ -1,4 +1,5 @@
 from rest_framework.viewsets import ModelViewSet
+from rest_framework import generics
 from ..models import Teacher
 
 from course.models import Discipline, Class, Teach
@@ -14,16 +15,6 @@ from rest_framework.response import Response
 class TeacherViewSet(ModelViewSet):
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer
-
-    @action(methods=['get'], detail=False, url_path='<id:teacher>/disciplines')
-    def getTeacherDisciplines(self, request):
-        id = request.data.get('id')
-        teach = Teach.objects.get(teacher_id=id)
-        disciplines = Discipline.objects.get(teach=teach)
-
-        serializer = DisciplineSerializer(disciplines, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
     
     @action(methods=['post'], detail=False, url_path='disciplines')
     def createTeacherBinding(self, request):
@@ -33,3 +24,31 @@ class TeacherViewSet(ModelViewSet):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+class TeacherDisciplinesViewSet(generics.ListAPIView):
+
+    queryset = Discipline.objects.all()
+    serializer_class = DisciplineSerializer
+
+    def get_queryset(self):
+        try:
+            teacher_id = self.kwargs['teacher']
+            teach = Teach.objects.get(teacher_id=teacher_id)
+
+            return self.queryset.filter(teach=teach)
+        except:
+            pass
+
+class TeacherClassesViewSet(generics.ListAPIView):
+
+    queryset = Class.objects.all()
+    serializer_class = ClassSerializer
+
+    def get_queryset(self):
+        try:
+            teacher_id = self.kwargs['teacher']
+            teach = Teach.objects.get(teacher_id=teacher_id)
+
+            return self.queryset.filter(teach=teach)
+        except:
+            pass
