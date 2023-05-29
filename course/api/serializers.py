@@ -11,7 +11,7 @@ class CourseSerializer(serializers.ModelSerializer):
 class DisciplineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Discipline
-        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional']
+        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional', 'courses']
 
 
 class TeachSerializer(serializers.ModelSerializer):
