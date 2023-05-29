@@ -27,11 +27,9 @@ class CourseDisciplineSerializer(serializers.ModelSerializer):
 
 
 class ClassSerializer(serializers.ModelSerializer):
-    # course_id = CourseSerializer(read_only=True)
-
     class Meta:
         model = Class
-        fields = ['id', 'course_id', 'reference_period', 'shift']
+        fields = ['id', 'course_id', 'reference_period', 'shift', 'class_leader']
 
 
 class ScheduleSerializer(serializers.ModelSerializer):

@@ -1,15 +1,14 @@
 from rest_framework import serializers
 from course.api.serializers import ClassSerializer, DisciplineSerializer
-
+from course.models import Discipline
 from ..models import Student, StudentAlert
 
 
 class StudentSerializer(serializers.ModelSerializer):
-    student_class = ClassSerializer()
-
+    disciplines = serializers.SlugRelatedField(queryset=Discipline.objects.all(), slug_field='code', required=False, many=True)
     class Meta:
         model = Student
-        fields = ['id', 'registration', 'avatar','student_class']
+        fields = ['id', 'name', 'registration', 'avatar','class_id', 'disciplines']
 
 class StudentAlertSerializer(serializers.ModelSerializer):
     discipline = DisciplineSerializer()
