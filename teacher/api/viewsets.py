@@ -35,16 +35,6 @@ class TeacherViewSet(ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    # @action(methods=['delete'], detail=False, url_path='teach/<int:teach>')
-    # def removeTeacherBinding(self, request, pk=None, discipline_id=None):
-    #     binding_id = request.data.get('id')
-    #     binding = Teach.objects.get(id=binding_id)
-
-    #     binding.delete()
-
-    #     return Response({'message': 'Vínculo excluído com sucesso'}, status=status.HTTP_204_NO_CONTENT)
-
-
 class TeacherDisciplinesViewSet(generics.ListAPIView):
 
     queryset = Discipline.objects.all()
@@ -75,7 +65,7 @@ class TeacherClassesViewSet(generics.ListAPIView):
             teacher_id = self.kwargs['teacher']
             teach = Teach.objects.filter(
                 teacher_id=teacher_id).values_list('class_id', flat=True).distinct()
-            
+
             queryset = []
             for id in teach:
                 queryset.append(Class.objects.get(id=id))
@@ -83,3 +73,7 @@ class TeacherClassesViewSet(generics.ListAPIView):
             return queryset
         except:
             pass
+
+class TeacherBindingViewSet(generics.DestroyAPIView):
+    queryset = Teach.objects.all()
+    serializer_class = TeachSerializer
