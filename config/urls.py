@@ -3,7 +3,7 @@ from django.urls import path
 
 from django.conf.urls import include
 from rest_framework import routers
-from course.api.viewsets import CourseViewSet, ClassViewSet, DisciplineViewSet
+from course.api.viewsets import CourseViewSet, ClassViewSet, DisciplineViewSet, ScheduleViewSet, TemporaryClassViewSet
 from teacher.api.viewsets import TeacherViewSet, TeacherClassesViewSet, TeacherDisciplinesViewSet, TeacherBindingViewSet
 from student.api.viewsets import StudentViewSet, StudentAlertViewSet
 from course.api.viewsets import CourseViewSet
@@ -16,6 +16,8 @@ router.register('disciplines', DisciplineViewSet)
 router.register('teachers', TeacherViewSet)
 router.register('students', StudentViewSet)
 router.register('alerts', StudentAlertViewSet)
+router.register('schedules', ScheduleViewSet)
+router.register('temporary-classes', TemporaryClassViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

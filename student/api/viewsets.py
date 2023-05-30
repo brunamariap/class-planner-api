@@ -1,6 +1,5 @@
 from rest_framework.viewsets import ModelViewSet
 from ..models import Student, StudentAlert
-from course.models import Discipline
 from .serializers import StudentSerializer, StudentAlertSerializer
 from rest_framework.response import Response
 from rest_framework import status
