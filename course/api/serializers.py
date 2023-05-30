@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from ..models import Course, Discipline, Class, Schedule, Teach, CourseDiscipline
-
+from ..models import Course, Discipline, Class, Schedule, Teach, CourseDiscipline, TemporaryClass, ClassCanceled
 
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -80,9 +79,18 @@ class ClassSerializer(serializers.ModelSerializer):
 
 class ScheduleSerializer(serializers.ModelSerializer):
     discipline = CourseSerializer(read_only=True)
-    schedule_class = CourseSerializer(read_only=True)
+    schedule_class = ClassSerializer(read_only=True)
 
     class Meta:
         model = Schedule
-        fields = ['id', 'quantity', 'start_time',
-                  'end_time', 'discipline', 'schedule_class']
+        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'discipline_id', 'class_id', 'discipline', 'schedule_class']
+
+class TemporaryClassSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TemporaryClass
+        fields = '__all__'
+
+class ClassCanceledSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClassCanceled
+        fields = ['id','schedule_id', 'canceled_date','reason', 'is_available', 'teacher_ids']

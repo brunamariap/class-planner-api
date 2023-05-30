@@ -26,9 +26,11 @@ SECRET_KEY = 'django-insecure-^$k8k_!)3u_42$_c*bi&5%nxon(-s$mza7l&v0$9bl!)t2-jx3
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-
 # Application definition
+
+REST_FRAMEWORK = {
+    "DATE_INPUT_FORMATS": ["%d/%m/%Y"],
+}
 
 INSTALLED_APPS = [
     'django.contrib.admin',

@@ -1,6 +1,6 @@
 from django.db import models
 from teacher.models import Teacher
-
+from config import settings
 class Course(models.Model):
     class Meta:
         db_table = 'course'
@@ -24,8 +24,8 @@ class Discipline(models.Model):
     is_optional = models.BooleanField()
     courses = models.ManyToManyField(Course, related_name='course_disciplines', through='CourseDiscipline', through_fields=('discipline_id', 'course_id', 'period'))
 
-    # def __str__(self):
-    #     return self.name
+    def __str__(self):
+        return self.name
     
 
 class CourseDiscipline(models.Model):
@@ -52,7 +52,7 @@ class Class(models.Model):
     shift = models.CharField(max_length=10, choices=Shift.choices)
 
     def __str__(self):
-        return f'{self.course_id}, {self.reference_period}, {self.shift}'
+        return f'{self.course_id}, {self.reference_period}°, {self.shift}'
 
 class Schedule(models.Model):
     class Meta:
@@ -60,11 +60,10 @@ class Schedule(models.Model):
 
     discipline_id = models.ForeignKey(Discipline, on_delete=models.CASCADE, db_column='discipline_id')
     quantity = models.IntegerField()
-    weekday = models.DateField()
+    weekday = models.IntegerField()
     start_time = models.TimeField()
     end_time = models.TimeField()
     class_id = models.ForeignKey(Class, on_delete=models.CASCADE, db_column='class_id')
-
 
 class ClassCanceled(models.Model):
     class Meta:
@@ -74,6 +73,7 @@ class ClassCanceled(models.Model):
     canceled_date = models.DateField()
     reason = models.TextField(max_length=200, blank=True, null=True)
     is_available = models.BooleanField()
+    teacher_ids = models.ManyToManyField(Teacher, db_table='substitute_teachers', db_column='teacher_ids', blank=True)
 
 class Teach(models.Model):
     class Meta:
@@ -83,18 +83,9 @@ class Teach(models.Model):
     discipline_id = models.ForeignKey(Discipline, on_delete=models.CASCADE, db_column='discipline_id')
     class_id = models.ForeignKey(Class, on_delete=models.CASCADE, db_column='class_id')
 
-
-class SubstituteTeachers(models.Model):
+class TemporaryClass(models.Model):
     class Meta:
-        db_table = 'substitute_teachers'
-
-    teacher_id = models.ForeignKey(Teacher, on_delete=models.CASCADE, db_column='teacher_id')
-    class_canceled_id = models.ForeignKey(ClassCanceled, on_delete=models.CASCADE, db_column='class_canceled_id')
-
-
-class TeachTemporarily(models.Model):
-    class Meta:
-        db_table = 'teach_temporarily'
+        db_table = 'temporary_class'
 
     class_canceled_id = models.ForeignKey(ClassCanceled, on_delete=models.CASCADE, db_column='class_canceled_id')
     quantity = models.IntegerField()
