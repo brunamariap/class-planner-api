@@ -24,8 +24,8 @@ class Discipline(models.Model):
     is_optional = models.BooleanField()
     courses = models.ManyToManyField(Course, related_name='course_disciplines', through='CourseDiscipline', through_fields=('discipline_id', 'course_id', 'period'))
 
-    def __str__(self):
-        return self.name
+    # def __str__(self):
+    #     return self.name
     
 
 class CourseDiscipline(models.Model):
@@ -46,7 +46,7 @@ class Class(models.Model):
         VESPERTINO = 'Tarde'
         NOTURNO = 'Noite'
     
-    class_leader = models.ForeignKey('student.Student', on_delete=models.DO_NOTHING, blank=True, null=True)
+    class_leader = models.ForeignKey('student.Student', on_delete=models.DO_NOTHING, blank=True, null=True, default=None)
     course_id = models.ForeignKey(Course, on_delete=models.CASCADE, db_column='course_id')
     reference_period = models.IntegerField()
     shift = models.CharField(max_length=10, choices=Shift.choices)

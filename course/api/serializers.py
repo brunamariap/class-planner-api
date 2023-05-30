@@ -9,7 +9,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class CourseDisciplineSerializer(serializers.ModelSerializer):
-    #course_id = CourseSerializer()
+    # course_id = CourseSerializer()
     class Meta:
         model = CourseDiscipline
         fields = ['id', 'course_id']
@@ -20,14 +20,17 @@ class DisciplineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Discipline
-        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional', 'course_period']
+        fields = ['id', 'name', 'code', 'workload_in_clock',
+                  'workload_in_class', 'is_optional', 'course_period']
 
     def show_course_period(self, instance):
-        course_discipline_objects = CourseDiscipline.objects.filter(discipline_id = instance.id)
+        course_discipline_objects = CourseDiscipline.objects.filter(
+            discipline_id=instance.id)
 
         course_period = []
         for object in course_discipline_objects.values():
-            course_period.extend([{'course_id':object['course_id_id'], 'period': object['period']}])
+            course_period.extend(
+                [{'course_id': object['course_id_id'], 'period': object['period']}])
 
         return course_period
 
@@ -38,15 +41,48 @@ class TeachSerializer(serializers.ModelSerializer):
         fields = ['id', 'teacher_id', 'discipline_id', 'class_id']
 
 
+class DisciplineWithTeachSerializer(serializers.ModelSerializer):
+    course_period = serializers.SerializerMethodField('show_course_period')
+    taught_by = serializers.SerializerMethodField('show_taught_by')
+
+    class Meta:
+        model = Discipline
+        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional', 'course_period', 'taught_by']
+
+    def show_course_period(self, instance):
+        course_discipline_objects = CourseDiscipline.objects.filter(
+            discipline_id=instance.id)
+
+        course_period = []
+        for object in course_discipline_objects.values():
+            course_period.extend(
+                [{'course_id': object['course_id_id'], 'period': object['period']}])
+
+        return course_period
+    
+    def show_taught_by(self, instance):
+        
+        if instance:
+            data = instance.teach_set
+            serializer = TeachSerializer(data, many=True)
+
+            return serializer.data
+    
+        return None
+
+
 class ClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Class
-        fields = ['id', 'course_id', 'reference_period', 'shift', 'class_leader']
+        fields = ['id', 'course_id',
+                  'reference_period', 'shift', 'class_leader']
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
     discipline = CourseSerializer(read_only=True)
     schedule_class = CourseSerializer(read_only=True)
+
     class Meta:
         model = Schedule
-        fields = ['id', 'quantity', 'start_time', 'end_time', 'discipline', 'schedule_class']
+        fields = ['id', 'quantity', 'start_time',
+                  'end_time', 'discipline', 'schedule_class']
