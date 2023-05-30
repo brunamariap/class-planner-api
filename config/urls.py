@@ -20,6 +20,6 @@ router.register('alerts', StudentAlertViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
-    path('teachers/<int:teacher>/disciplines/', TeacherDisciplinesViewSet.as_view()),
-    path('teachers/<int:teacher>/classes/', TeacherClassesViewSet.as_view()),
+    path('api/teachers/<int:teacher>/disciplines/', TeacherDisciplinesViewSet.as_view()),
+    path('api/teachers/<int:teacher>/classes/', TeacherClassesViewSet.as_view()),
 ]
