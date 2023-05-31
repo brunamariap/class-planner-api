@@ -93,4 +93,4 @@ class TemporaryClassSerializer(serializers.ModelSerializer):
 class ClassCanceledSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassCanceled
-        fields = ['id','schedule_id', 'canceled_date','reason', 'is_available', 'teacher_ids']
+        fields = ['id','schedule_id', 'canceled_date','reason', 'is_available', 'quantity_available', 'teacher_ids']

@@ -5,6 +5,7 @@ from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime,date
+from django.db.models import Sum
 
 class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
@@ -72,9 +73,17 @@ class ScheduleViewSet(ModelViewSet):
     queryset = Schedule.objects.all()
     serializer_class = ScheduleSerializer
 
-    @action(methods=['post'], detail=False, url_path='cancel')
+    
+    @action(methods=['GET','POST'], detail=False, url_path='canceled')
     def cancelSchedule(self, request):
-        try:
+        
+        if (request.method == 'GET'):
+            canceled_classes = ClassCanceled.objects.all()
+            serializer = ClassCanceledSerializer(many=True, data=canceled_classes)
+            serializer.is_valid()
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        elif (request.method == 'POST'):
             schedule_id = request.data['schedule_id']
             canceled_date = datetime.strptime(request.data['canceled_date'], "%d/%m/%Y")
 
@@ -86,6 +95,9 @@ class ScheduleViewSet(ModelViewSet):
                     schedule_id=schedule_id, canceled_date=canceled_date)
             if (already_exists):
                 return Response({'message': 'Esta aula já foi cancelada na data informada'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if (schedule.quantity < request.data['quantity_available']):
+                return Response({'message': f'Quantidade solicitada para disponibilizar aulas é maior que a quantidade ofertada no horário selecionado. Há {schedule.quantity} aulas desta disciplina'}, status=status.HTTP_400_BAD_REQUEST)
 
             serializer = ClassCanceledSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -94,10 +106,8 @@ class ScheduleViewSet(ModelViewSet):
             headers = self.get_success_headers(serializer.data)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        except:
-            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-    @action(methods=['delete'], detail=False, url_path='cancel/(?P<class_canceled_id>[^/.]+)')
+    @action(methods=['DELETE'], detail=False, url_path='canceled/(?P<class_canceled_id>[^/.]+)')
     def cancelClassCancellation(self, request, class_canceled_id):
         try:
             class_canceled = ClassCanceled.objects.get(id=class_canceled_id)
@@ -110,3 +120,35 @@ class ScheduleViewSet(ModelViewSet):
 class TemporaryClassViewSet(ModelViewSet):
     queryset = TemporaryClass.objects.all()
     serializer_class = TemporaryClassSerializer
+
+    def create(self, request):
+        already_replaced = TemporaryClass.objects.filter(class_canceled_id=request.data['class_canceled_id']).aggregate(total_quantity=Sum('quantity'))
+        
+        if (already_replaced['total_quantity']):
+            class_canceled = ClassCanceled.objects.get(id=request.data['class_canceled_id'])
+            remaining_amount = class_canceled.quantity_available - already_replaced['total_quantity']
+
+            if (remaining_amount > 0 and request.data['quantity'] > remaining_amount):
+                return Response({"message": f"Quantidade solicitada é superior a disponível. Há {remaining_amount} aulas disponíveis"}, status=status.HTTP_400_BAD_REQUEST)
+            elif (remaining_amount < 1):
+                return Response({"message": "Não há mais aulas disponíveis para serem substituídas"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            class_canceled.quantity_available = remaining_amount - request.data['quantity']
+            class_canceled.save()
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        class_canceled = ClassCanceled.objects.get(id=instance.class_canceled_id.id)
+        class_canceled.quantity_available += instance.quantity
+        class_canceled.save()
+
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
