@@ -11,6 +11,15 @@ class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
 
+    @action(methods=['GET'], detail=False, url_path='(?P<course_id>[^/.]+)/classes')
+    def get_classes_of_courses(self, request, course_id, *args, **kwargs):
+        try:
+            classes = Class.objects.filter(course_id=course_id)
+            serializer = ClassSerializer(classes, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            pass
+
 
 class DisciplineViewSet(ModelViewSet):
     queryset = Discipline.objects.all()
@@ -59,7 +68,7 @@ class CourseDisciplinesGenericView(generics.ListAPIView):
 class ClassViewSet(ModelViewSet):
     queryset = Class.objects.all()
     serializer_class = ClassSerializer
-
+        
 
     # def getWeekSchedules():
     #     schedules = Schedule.objects.all()
@@ -79,7 +88,7 @@ class ScheduleViewSet(ModelViewSet):
 
     
     @action(methods=['GET','POST'], detail=False, url_path='canceled')
-    def cancelSchedule(self, request):
+    def cancel_schedule(self, request):
         
         if (request.method == 'GET'):
             canceled_classes = ClassCanceled.objects.all()
@@ -112,7 +121,7 @@ class ScheduleViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         
     @action(methods=['DELETE'], detail=False, url_path='canceled/(?P<class_canceled_id>[^/.]+)')
-    def cancelClassCancellation(self, request, class_canceled_id):
+    def cancel_class_cancellation(self, request, class_canceled_id):
         try:
             class_canceled = ClassCanceled.objects.get(id=class_canceled_id)
             class_canceled.delete()

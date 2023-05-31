@@ -90,8 +90,7 @@ class DisciplineWithTeachSerializer(serializers.ModelSerializer):
 class ClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Class
-        fields = ['id', 'course_id',
-                  'reference_period', 'shift', 'class_leader']
+        fields = ['id', 'course_id', 'reference_period', 'shift', 'class_leader_id']
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
