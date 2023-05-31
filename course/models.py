@@ -73,6 +73,7 @@ class ClassCanceled(models.Model):
     canceled_date = models.DateField()
     reason = models.TextField(max_length=200, blank=True, null=True)
     is_available = models.BooleanField()
+    quantity_available = models.IntegerField()
     teacher_ids = models.ManyToManyField(Teacher, db_table='substitute_teachers', db_column='teacher_ids', blank=True)
 
 class Teach(models.Model):
