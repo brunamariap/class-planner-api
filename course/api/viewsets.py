@@ -1,14 +1,27 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
-from ..models import Course, Class, Discipline, CourseDiscipline, Schedule
-from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer, ScheduleSerializer
-from rest_framework.response import Response
+from rest_framework import generics
 from rest_framework import status
+from rest_framework.response import Response
+from ..models import Course, Class, Discipline, CourseDiscipline, Schedule
+from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer, CourseDisciplinePeriodSerializer, ScheduleSerializer
 
 
 class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+
+    """ @action(methods=['GET'], detail=False, url_path='(?P<pk>[^/.]+)/disciplines')
+    def get_course_disciplines(self, request, *args, **kwargs):
+        
+            course_id = self.kwargs['pk']
+            print(course_id)
+            course_disciplines = Discipline.objects.filter(course_id=course_id)
+            print(course_disciplines)
+            disciplines = Discipline.objects.filter(id__in=course_disciplines)
+            serializer = DisciplineSerializer(disciplines, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK) """
 
 class DisciplineViewSet(ModelViewSet):
     queryset = Discipline.objects.all()
@@ -28,6 +41,26 @@ class DisciplineViewSet(ModelViewSet):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+
+class CourseDisciplinesGenericView(generics.ListAPIView):
+    queryset = CourseDiscipline.objects.all()
+    serializer_class = CourseDisciplinePeriodSerializer
+
+    def get_queryset(self):
+        try:
+            course_id = self.kwargs['course']
+            disciplines = CourseDiscipline.objects.filter(course_id=course_id)
+
+            disciplines_ids = []
+            for obj in disciplines:
+                disciplines_ids.append(obj.discipline_id.id)
+
+            disciplines = CourseDiscipline.objects.filter(discipline_id__in=disciplines_ids)
+            serializer = self.get_serializer(disciplines, many=True)
+            return serializer.data
+        except:
+            pass
 
 
 class ClassViewSet(ModelViewSet):
