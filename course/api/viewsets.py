@@ -1,10 +1,11 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from ..models import Course, Class, Discipline, CourseDiscipline, Schedule, TemporaryClass, ClassCanceled
-from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer
+from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from datetime import datetime,date
+from rest_framework import generics
 
 class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
@@ -16,45 +17,49 @@ class DisciplineViewSet(ModelViewSet):
     serializer_class = DisciplineSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        courses_length = request.data['course_period']
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            courses_length = request.data['course_period']
 
-        serializer.save()
-        for i in range(len(courses_length)):
-            course_create = CourseDiscipline.objects.create(discipline_id=Discipline.objects.all().last(),
-                                                            course_id=Course.objects.get(
-                                                                id=request.data['course_period'][i]['course_id']),
-                                                            period=request.data['course_period'][i]['period'])
-            course_create.save()
+            serializer.save()
+            for i in range(len(courses_length)):
+                course_create = CourseDiscipline.objects.create(discipline_id=Discipline.objects.all().last(),
+                                                                course_id=Course.objects.get(
+                                                                    id=request.data['course_period'][i]['course_id']),
+                                                                period=request.data['course_period'][i]['period'])
+                course_create.save()
 
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except:
+            pass
+    
+
+class CourseDisciplinesGenericView(generics.ListAPIView):
+    queryset = CourseDiscipline.objects.all()
+    serializer_class = CourseDisciplinePeriodSerializer
+
+    def get_queryset(self):
+        try:
+            course_id = self.kwargs['course']
+            disciplines = CourseDiscipline.objects.filter(course_id=course_id)
+
+            disciplines_ids = []
+            for obj in disciplines:
+                disciplines_ids.append(obj.discipline_id.id)
+
+            disciplines = CourseDiscipline.objects.filter(discipline_id__in=disciplines_ids)
+            serializer = self.get_serializer(disciplines, many=True)
+            return serializer.data
+        except:
+            pass
 
 
 class ClassViewSet(ModelViewSet):
     queryset = Class.objects.all()
     serializer_class = ClassSerializer
 
-    """ def create(self, request, *args, **kwargs):
-
-        course_data = Course.objects.get(id=request.data.get("course_id"))
-        
-        try:
-            serializer = self.get_serializer(data=request.data) 
-            serializer.is_valid(raise_exception=True)
-
-            serializer.validated_data['course_id'] = course_data
-            serializer.save()
-
-            headers = self.get_success_headers(serializer.data)
-
-            return Response(
-                serializer.data, status=status.HTTP_201_CREATED, headers=headers
-            )
-
-        except:
-            pass
 
     # def getWeekSchedules():
     #     schedules = Schedule.objects.all()
@@ -65,7 +70,7 @@ class ClassViewSet(ModelViewSet):
     #     schedules = Schedule.objects.get()
     #     serializer = ScheduleSerializer()
 
-    #     return Response(serializer.data, status=status.HTTP_200_OK)"""
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ScheduleViewSet(ModelViewSet):

@@ -10,8 +10,25 @@ class CourseSerializer(serializers.ModelSerializer):
 class CourseDisciplineSerializer(serializers.ModelSerializer):
     # course_id = CourseSerializer()
     class Meta:
+        model = Discipline
+        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional']
+
+
+class CourseDisciplinePeriodSerializer(serializers.ModelSerializer):
+    #discipline = serializers.SerializerMethodField('show_discipline')
+    discipline_id = CourseDisciplineSerializer(read_only=True)
+
+    class Meta:
         model = CourseDiscipline
-        fields = ['id', 'course_id']
+        fields = ['discipline_id', 'period']
+
+    def show_discipline(self, instance):
+        if instance:  
+            discipline_obj = Discipline.objects.get(id=instance.discipline_id)
+            print(discipline_obj)
+            #discipline = CourseDisciplineSerializer(discipline_obj)
+            #print(discipline)
+            return {"discipline": discipline_obj}
 
 
 class DisciplineSerializer(serializers.ModelSerializer):

@@ -18,7 +18,7 @@ class TeacherViewSet(ModelViewSet):
     serializer_class = TeacherSerializer
 
     @action(methods=['post'], detail=False, url_path='disciplines')
-    def createTeacherBinding(self, request):
+    def create_teacher_binding(self, request):
         class_id = request.data['class_id']
         teacher_id = request.data['teacher_id']
 
