@@ -10,6 +10,13 @@ class StudentSerializer(serializers.ModelSerializer):
         model = Student
         fields = ['id', 'name', 'registration', 'avatar','class_id', 'disciplines']
 
+
+class ClassStudentsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ['id', 'name', 'registration', 'avatar', 'disciplines']
+
+
 class StudentAlertSerializer(serializers.ModelSerializer):
     discipline = DisciplineSerializer()
     student = StudentSerializer()
