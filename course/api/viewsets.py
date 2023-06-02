@@ -1,7 +1,9 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from ..models import Course, Class, Discipline, CourseDiscipline, Schedule, TemporaryClass, ClassCanceled
-from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer
+from .serializers import CourseSerializer, ClassSerializer, CourseClassesSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer
+from student.models import Student
+from student.api.serializers import ClassStudentsSerializer
 from rest_framework.response import Response
 from rest_framework import status, generics
 from datetime import datetime,date
@@ -15,7 +17,7 @@ class CourseViewSet(ModelViewSet):
     def get_classes_of_courses(self, request, course_id, *args, **kwargs):
         try:
             classes = Class.objects.filter(course_id=course_id)
-            serializer = ClassSerializer(classes, many=True)
+            serializer = CourseClassesSerializer(classes, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:
             pass
@@ -69,6 +71,14 @@ class ClassViewSet(ModelViewSet):
     queryset = Class.objects.all()
     serializer_class = ClassSerializer
         
+    @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/students')
+    def get_class_students(self, request, class_id, *args, **kwargs):
+        try:
+            students = Student.objects.filter(class_id=class_id)
+            serializer = ClassStudentsSerializer(students, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            pass
 
     # def getWeekSchedules():
     #     schedules = Schedule.objects.all()

@@ -29,6 +29,12 @@ class CourseDisciplinePeriodSerializer(serializers.ModelSerializer):
             #discipline = CourseDisciplineSerializer(discipline_obj)
             #print(discipline)
             return {"discipline": discipline_obj}
+        
+
+class CourseClassesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Class
+        fields = ['id', 'reference_period', 'shift', 'class_leader_id']
 
 
 class DisciplineSerializer(serializers.ModelSerializer):
