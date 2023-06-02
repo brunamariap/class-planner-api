@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status, generics
 from datetime import datetime,date
 from django.db.models import Sum
+from itertools import chain
 
 class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
@@ -77,6 +78,27 @@ class ScheduleViewSet(ModelViewSet):
     queryset = Schedule.objects.all()
     serializer_class = ScheduleSerializer
 
+    def get_queryset(self):
+        queryset = list(self.queryset)
+        canceled_schedule = ClassCanceled.objects.filter(schedule_id__id__in=self.queryset)
+        classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedule)
+
+        if (classes_to_replace):
+            for schedule in classes_to_replace.values():
+                canceled = ClassCanceled.objects.get(id=schedule['class_canceled_id_id'])
+                
+                replace = Schedule.objects.get(id=canceled.schedule_id.id)
+                
+                replace.quantity = schedule['quantity']
+                replace.temporary_class_id = schedule
+                replace.discipline_id = Discipline.objects.get(id=schedule['discipline_id_id'])
+                
+                queryset.append(replace)
+
+
+            return queryset
+        
+        return queryset
     
     @action(methods=['GET','POST'], detail=False, url_path='canceled')
     def cancelSchedule(self, request):

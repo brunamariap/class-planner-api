@@ -36,8 +36,7 @@ class DisciplineSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Discipline
-        fields = ['id', 'name', 'code', 'workload_in_clock',
-                  'workload_in_class', 'is_optional', 'course_period']
+        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional', 'course_period']
 
     def show_course_period(self, instance):
         course_discipline_objects = CourseDiscipline.objects.filter(
@@ -90,24 +89,66 @@ class DisciplineWithTeachSerializer(serializers.ModelSerializer):
 class ClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Class
-        fields = ['id', 'course_id',
-                  'reference_period', 'shift', 'class_leader']
+        fields = ['id', 'course_id', 'reference_period', 'shift', 'class_leader']
 
-
-class ScheduleSerializer(serializers.ModelSerializer):
-    discipline = CourseSerializer(read_only=True)
-    schedule_class = ClassSerializer(read_only=True)
-
-    class Meta:
-        model = Schedule
-        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'discipline_id', 'class_id', 'discipline', 'schedule_class']
 
 class TemporaryClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = TemporaryClass
-        fields = '__all__'
+        fields = ['id', 'class_canceled_id', 'quantity', 'teacher_id', 'discipline_id']
+
 
 class ClassCanceledSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassCanceled
         fields = ['id','schedule_id', 'canceled_date','reason', 'is_available', 'quantity_available', 'teacher_ids']
+
+class ScheduleSerializer(serializers.ModelSerializer):
+    discipline = CourseSerializer(read_only=True)
+    schedule_class = ClassSerializer(read_only=True)
+
+    temporary_class_id = serializers.SerializerMethodField('show_temporary_class_id')
+    canceled_class = serializers.SerializerMethodField('show_canceled_class')
+    class_to_replace = serializers.SerializerMethodField('show_class_to_replace') 
+
+    class Meta:
+        model = Schedule
+        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'discipline_id', 'class_id', 'discipline', 'schedule_class', 'canceled_class', 'class_to_replace', 'temporary_class_id']
+
+    def without_results(self, instance):
+        return None
+
+    def show_temporary_class_id(self, instance):
+        try:
+            return instance.temporary_class_id['id']
+        except:
+            return None
+
+    def show_canceled_class(self, instance):
+        try:
+            canceled_schedule = ClassCanceled.objects.get(schedule_id=instance.id)
+
+            if (canceled_schedule):
+                serializer = ClassCanceledSerializer(canceled_schedule)
+
+                return serializer.data
+        except:
+            return None
+    
+    def show_class_to_replace(self, instance):
+        
+        try:
+            canceled_schedule = ClassCanceled.objects.get(schedule_id=instance.id)
+        
+            if not (canceled_schedule):
+                return None
+            
+            classes_to_replace = TemporaryClass.objects.filter(class_canceled_id=canceled_schedule)
+            
+            if (classes_to_replace):
+                serializer = TemporaryClassSerializer(classes_to_replace, many=True)
+
+                return serializer.data
+    
+        except:
+            return None
