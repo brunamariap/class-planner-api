@@ -1,7 +1,9 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from ..models import Course, Class, Discipline, CourseDiscipline, Schedule, TemporaryClass, ClassCanceled
-from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer
+from .serializers import CourseSerializer, ClassSerializer, CourseClassesSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer
+from student.models import Student
+from student.api.serializers import ClassStudentsSerializer
 from rest_framework.response import Response
 from rest_framework import status, generics
 from datetime import datetime,date
@@ -11,6 +13,15 @@ from itertools import chain
 class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+
+    @action(methods=['GET'], detail=False, url_path='(?P<course_id>[^/.]+)/classes')
+    def get_classes_of_courses(self, request, course_id, *args, **kwargs):
+        try:
+            classes = Class.objects.filter(course_id=course_id)
+            serializer = CourseClassesSerializer(classes, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            pass
 
 
 class DisciplineViewSet(ModelViewSet):
@@ -60,7 +71,15 @@ class CourseDisciplinesGenericView(generics.ListAPIView):
 class ClassViewSet(ModelViewSet):
     queryset = Class.objects.all()
     serializer_class = ClassSerializer
-
+        
+    @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/students')
+    def get_class_students(self, request, class_id, *args, **kwargs):
+        try:
+            students = Student.objects.filter(class_id=class_id)
+            serializer = ClassStudentsSerializer(students, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            pass
 
     # def getWeekSchedules():
     #     schedules = Schedule.objects.all()
@@ -101,7 +120,7 @@ class ScheduleViewSet(ModelViewSet):
         return queryset
     
     @action(methods=['GET','POST'], detail=False, url_path='canceled')
-    def cancelSchedule(self, request):
+    def cancel_schedule(self, request):
         
         if (request.method == 'GET'):
             canceled_classes = ClassCanceled.objects.all()
@@ -134,7 +153,7 @@ class ScheduleViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         
     @action(methods=['DELETE'], detail=False, url_path='canceled/(?P<class_canceled_id>[^/.]+)')
-    def cancelClassCancellation(self, request, class_canceled_id):
+    def cancel_class_cancellation(self, request, class_canceled_id):
         try:
             class_canceled = ClassCanceled.objects.get(id=class_canceled_id)
             class_canceled.delete()
