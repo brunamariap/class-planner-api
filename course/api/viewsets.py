@@ -46,7 +46,7 @@ class DisciplineViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except:
             pass
-    
+
 
 class CourseDisciplinesGenericView(generics.ListAPIView):
     queryset = CourseDiscipline.objects.all()
