@@ -132,10 +132,10 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
     def show_canceled_class(self, instance):
         try:
-            canceled_schedule = ClassCanceled.objects.get(schedule_id=instance.id)
+            canceled_schedule = ClassCanceled.objects.filter(schedule_id=instance.id)
 
             if (canceled_schedule):
-                serializer = ClassCanceledSerializer(canceled_schedule)
+                serializer = ClassCanceledSerializer(canceled_schedule, many=True)
 
                 return serializer.data
         except:
@@ -144,17 +144,17 @@ class ScheduleSerializer(serializers.ModelSerializer):
     def show_class_to_replace(self, instance):
         
         try:
-            canceled_schedule = ClassCanceled.objects.get(schedule_id=instance.id)
+            canceled_schedules = ClassCanceled.objects.filter(schedule_id=instance.id)
         
-            if not (canceled_schedule):
+            if len(canceled_schedules) < 1:
                 return None
             
-            classes_to_replace = TemporaryClass.objects.filter(class_canceled_id=canceled_schedule)
+            classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedules)
             
             if (classes_to_replace):
                 serializer = TemporaryClassSerializer(classes_to_replace, many=True)
 
                 return serializer.data
     
-        except:
+        except: 
             return None
