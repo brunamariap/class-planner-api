@@ -135,7 +135,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
         
         canceled_schedules = ClassCanceled.objects.filter(schedule_id=instance.id)
         
-        reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date() if self.context['request'].query_params else None
+        reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date() if 'date' in self.context['request'].query_params else None
 
         
         if len(canceled_schedules) > 0:
@@ -165,7 +165,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
         if len(canceled_schedules) < 1:
             return []
         
-        reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date() if self.context['request'].query_params else None
+        reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date() if 'date' in self.context['request'].query_params else None
         classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedules)
         
         week_replaced_classes = []

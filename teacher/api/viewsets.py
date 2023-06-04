@@ -101,7 +101,7 @@ class TeacherSchedulesViewSet(generics.ListAPIView):
             for schedule in classes_to_replace.values():
                 canceled = ClassCanceled.objects.get(id=schedule['class_canceled_id_id'])
                 
-                current_day = date.today() if not self.request.GET.get('date') else datetime.strptime(self.request.GET.get('date'), '%d/%m/%Y').date()
+                current_day = date.today() if not hasattr(self.request.GET.get('date'), 'date') else datetime.strptime(self.request.GET.get('date'), '%d/%m/%Y').date()
                 
                 weekday = current_day.weekday()
                 sunday = current_day - timedelta(days=weekday+1)

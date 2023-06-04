@@ -23,8 +23,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
 
-    path('api/teachers/disciplines/<int:pk>/', TeacherBindingViewSet.as_view()),
     path('api/courses/<int:course>/disciplines/', CourseDisciplinesGenericView.as_view()),
+    path('api/teachers/disciplines/<int:pk>/', TeacherBindingViewSet.as_view()),
     path('api/teachers/<int:teacher>/disciplines/', TeacherDisciplinesViewSet.as_view()),
     path('api/teachers/<int:teacher>/classes/', TeacherClassesViewSet.as_view()),
     path('api/teachers/<int:teacher>/schedules/', TeacherSchedulesViewSet.as_view()),
