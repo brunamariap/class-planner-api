@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from ..models import Course, Discipline, Class, Schedule, Teach, CourseDiscipline, TemporaryClass, ClassCanceled
+from datetime import datetime, timedelta, date
 
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -114,12 +115,12 @@ class ScheduleSerializer(serializers.ModelSerializer):
     schedule_class = ClassSerializer(read_only=True)
 
     temporary_class_id = serializers.SerializerMethodField('show_temporary_class_id')
-    canceled_class = serializers.SerializerMethodField('show_canceled_class')
-    class_to_replace = serializers.SerializerMethodField('show_class_to_replace') 
+    canceled_classes = serializers.SerializerMethodField('show_canceled_classes')
+    classes_to_replace = serializers.SerializerMethodField('show_classes_to_replace') 
 
     class Meta:
         model = Schedule
-        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'discipline_id', 'class_id', 'discipline', 'schedule_class', 'canceled_class', 'class_to_replace', 'temporary_class_id']
+        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'discipline_id', 'class_id', 'discipline', 'schedule_class', 'canceled_classes', 'classes_to_replace', 'temporary_class_id']
 
     def without_results(self, instance):
         return None
@@ -130,31 +131,61 @@ class ScheduleSerializer(serializers.ModelSerializer):
         except:
             return None
 
-    def show_canceled_class(self, instance):
-        try:
-            canceled_schedule = ClassCanceled.objects.filter(schedule_id=instance.id)
-
-            if (canceled_schedule):
-                serializer = ClassCanceledSerializer(canceled_schedule, many=True)
-
-                return serializer.data
-        except:
-            return None
-    
-    def show_class_to_replace(self, instance):
+    def show_canceled_classes(self, instance):
         
-        try:
-            canceled_schedules = ClassCanceled.objects.filter(schedule_id=instance.id)
+        canceled_schedules = ClassCanceled.objects.filter(schedule_id=instance.id)
         
-            if len(canceled_schedules) < 1:
-                return None
-            
-            classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedules)
-            
-            if (classes_to_replace):
-                serializer = TemporaryClassSerializer(classes_to_replace, many=True)
+        reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date() if 'date' in self.context['request'].query_params else None
 
-                return serializer.data
+        
+        if len(canceled_schedules) > 0:
+            week_canceled_schedules = []
+
+            for schedule in canceled_schedules.values():
+                current_day = date.today() if not reference_date else reference_date
+                weekday = current_day.weekday()
+                next_monday = current_day - timedelta(days=weekday+1)
+                weekdates = [next_monday + timedelta(days=x) for x in range(7)]
+                
+                if schedule['canceled_date'] in weekdates:
+                    schedule['schedule_id'] = schedule['schedule_id_id']
+                    week_canceled_schedules.append(schedule)
+                
+            serializer = ClassCanceledSerializer(data=week_canceled_schedules, many=True)
+            serializer.is_valid()
+
+            return serializer.data
+
+        return []
     
-        except: 
-            return None
+    def show_classes_to_replace(self, instance):
+        
+        canceled_schedules = ClassCanceled.objects.filter(schedule_id=instance.id)
+        
+        if len(canceled_schedules) < 1:
+            return []
+        
+        reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date() if 'date' in self.context['request'].query_params else None
+        classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedules)
+        
+        week_replaced_classes = []
+
+        for schedule in classes_to_replace.values():
+            current_day = date.today() if not reference_date else reference_date
+            weekday = current_day.weekday()
+            sunday = current_day - timedelta(days=weekday+1)
+            weekdates = [sunday + timedelta(days=x) for x in range(7)]
+            
+            canceled_class = ClassCanceled.objects.get(id=schedule['class_canceled_id_id'])
+
+            if canceled_class.canceled_date in weekdates:
+                schedule['class_canceled_id'] = schedule['class_canceled_id_id']
+                schedule['teacher_id'] = schedule['teacher_id_id']
+                schedule['discipline_id'] = schedule['discipline_id_id']
+
+                week_replaced_classes.append(schedule)
+        
+        serializer = TemporaryClassSerializer(data=week_replaced_classes, many=True)
+        serializer.is_valid()
+
+        return serializer.data
