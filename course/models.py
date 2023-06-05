@@ -17,7 +17,7 @@ class Discipline(models.Model):
     class Meta:
         db_table = 'discipline'
 
-    name = models.CharField(max_length=60)
+    name = models.CharField(max_length=300)
     code = models.CharField(max_length=15, unique=True)
     workload_in_clock = models.IntegerField()
     workload_in_class = models.IntegerField()
@@ -34,7 +34,7 @@ class CourseDiscipline(models.Model):
 
     discipline_id = models.ForeignKey(Discipline, on_delete=models.CASCADE, db_column='discipline_id')
     course_id = models.ForeignKey(Course, on_delete=models.CASCADE, db_column='course_id')
-    period = models.IntegerField()
+    period = models.IntegerField(null=True, blank=True)
 
 
 class Class(models.Model):
