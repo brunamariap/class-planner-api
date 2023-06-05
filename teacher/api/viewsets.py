@@ -117,6 +117,5 @@ class TeacherSchedulesViewSet(generics.ListAPIView):
                     queryset.append(replace)
                 
 
-            return queryset
-
         return queryset
+    

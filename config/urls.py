@@ -9,7 +9,7 @@ from student.api.viewsets import StudentViewSet, StudentAlertViewSet
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 router = routers.SimpleRouter()
-''
+
 router.register('courses', CourseViewSet)
 router.register('classes', ClassViewSet)
 router.register('disciplines', DisciplineViewSet)
