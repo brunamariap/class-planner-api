@@ -20,8 +20,7 @@ class StudentViewSet(ModelViewSet):
         classes = Class.objects.filter(course_id=student.class_id.course_id)
         schedules = Schedule.objects.filter(class_id__in=classes.values_list('id', flat=True), discipline_id__in=disciplines.values_list("id", flat=True))
         
-        queryset = list(schedules)
-        print(queryset)
+        queryset = list(schedules) 
         classes_to_replace = TemporaryClass.objects.filter(discipline_id__in=disciplines.values_list("id", flat=True))
         
         if (classes_to_replace):
