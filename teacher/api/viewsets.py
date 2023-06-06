@@ -95,8 +95,6 @@ class TeacherViewSet(ModelViewSet):
         classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedule)
 
         for week_schedule in days_of_month:
-            
-            new_week_schedules = []
 
             for current_schedule in queryset:
                 if week_schedule.weekday() == current_schedule.weekday:
