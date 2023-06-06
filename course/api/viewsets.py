@@ -9,7 +9,9 @@ from rest_framework import status, generics
 from datetime import datetime,date
 from django.db.models import Sum
 from itertools import chain
+import math
 from datetime import date, timedelta, datetime
+
 
 class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
@@ -48,6 +50,54 @@ class DisciplineViewSet(ModelViewSet):
         except:
             pass
 
+
+class ImportDisciplineGenericView(generics.CreateAPIView):  
+    queryset = Discipline.objects.all()
+    serializer_class = DisciplineSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            disciplines_json_list = request.data
+            all_disciplines = Discipline.objects.all().values()
+            list_codes = [object['code'] for object in all_disciplines]
+            for discipline in disciplines_json_list:
+                if not discipline['Sigla'] in list_codes:
+                    is_optional = discipline['Optativo']
+                    workload_in_class = int(discipline['CH Componente'][-2:])
+    
+                    discipline_dict = {
+                        "name":discipline['Componente'],
+                        "code":discipline['Sigla'],
+                        "is_optional": True if is_optional == 'Sim' else False,
+                        "workload_in_class":workload_in_class,
+                        "workload_in_clock":int(math.ceil(workload_in_class*45)/60),
+                        "course_period":[
+                            {
+                                "course_id": Course.objects.get(id=self.kwargs['course']),
+                                "period": None if discipline['Período'] == '-' else int(discipline['Período'])
+                            }
+                        ]
+                    }
+
+                    serializer = self.get_serializer(data=discipline_dict)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+                    course_create = CourseDiscipline.objects.create(discipline_id=Discipline.objects.all().last(),
+                                                                    course_id=Course.objects.get(id=self.kwargs['course']),
+                                                                    period= None if discipline['Período'] == '-' else int(discipline['Período']))
+                    course_create.save()
+                else:
+                    discipline_code = discipline['Sigla']
+                    discipline_obj = Discipline.objects.get(code=discipline_code)
+                    course_create = CourseDiscipline.objects.create(discipline_id=discipline_obj,
+                                                                    course_id=Course.objects.get(id=self.kwargs['course']),
+                                                                    period= None if discipline['Período'] == '-' else int(discipline['Período']))
+                    course_create.save()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except:
+            Response(status=status.HTTP_400_BAD_REQUEST)
+    
 
 class CourseDisciplinesGenericView(generics.ListAPIView):
     queryset = CourseDiscipline.objects.all()
@@ -116,6 +166,7 @@ class ClassViewSet(ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class ScheduleViewSet(ModelViewSet):
     queryset = Schedule.objects.all()
     serializer_class = ScheduleSerializer
@@ -183,6 +234,7 @@ class ScheduleViewSet(ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except:
             return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class TemporaryClassViewSet(ModelViewSet):
     queryset = TemporaryClass.objects.all()
