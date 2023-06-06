@@ -5,7 +5,7 @@ from django.conf.urls import include
 from rest_framework import routers
 
 from course.api.viewsets import CourseViewSet, ClassViewSet, DisciplineViewSet, CourseDisciplinesGenericView, ScheduleViewSet, TemporaryClassViewSet, ImportDisciplineGenericView
-from teacher.api.viewsets import TeacherViewSet, TeacherClassesViewSet, TeacherDisciplinesViewSet, TeacherBindingViewSet, TeacherSchedulesViewSet
+from teacher.api.viewsets import TeacherViewSet, TeacherClassesViewSet, TeacherDisciplinesViewSet, TeacherBindingViewSet
 
 from student.api.viewsets import StudentViewSet, StudentAlertViewSet
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
