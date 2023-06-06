@@ -3,8 +3,10 @@ from django.urls import path
 
 from django.conf.urls import include
 from rest_framework import routers
+
 from course.api.viewsets import CourseViewSet, ClassViewSet, DisciplineViewSet, CourseDisciplinesGenericView, ScheduleViewSet, TemporaryClassViewSet, ImportDisciplineGenericView
 from teacher.api.viewsets import TeacherViewSet, TeacherClassesViewSet, TeacherDisciplinesViewSet, TeacherBindingViewSet, TeacherSchedulesViewSet
+
 from student.api.viewsets import StudentViewSet, StudentAlertViewSet
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
@@ -27,7 +29,6 @@ urlpatterns = [
     path('api/courses/<int:course>/disciplines/', CourseDisciplinesGenericView.as_view()),
     path('api/teachers/<int:teacher>/disciplines/', TeacherDisciplinesViewSet.as_view()),
     path('api/teachers/<int:teacher>/classes/', TeacherClassesViewSet.as_view()),
-    path('api/teachers/<int:teacher>/schedules/', TeacherSchedulesViewSet.as_view()),
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger'),
