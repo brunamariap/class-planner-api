@@ -134,44 +134,28 @@ class ClassViewSet(ModelViewSet):
     def get_class_week_schedules(self, request, class_id, *args, **kwargs):
         
         schedules = Schedule.objects.filter(class_id=class_id)
-
         serializer = ScheduleSerializer(schedules, many=True, context={'request': request})
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 class ScheduleViewSet(ModelViewSet):
     queryset = Schedule.objects.all()
     serializer_class = ScheduleSerializer
 
     def get_queryset(self):
-        queryset = list(self.queryset)
-        canceled_schedule = ClassCanceled.objects.filter(schedule_id__id__in=self.queryset)
-        classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedule)
-
-        if (classes_to_replace):
-            for schedule in classes_to_replace.values():
-                canceled = ClassCanceled.objects.get(id=schedule['class_canceled_id_id'])
-                
-                replace = Schedule.objects.get(id=canceled.schedule_id.id)
-                
-                replace.quantity = schedule['quantity']
-                replace.temporary_class_id = schedule
-                replace.discipline_id = Discipline.objects.get(id=schedule['discipline_id_id'])
-                
-                queryset.append(replace)
-
-            return queryset
+        queryset = Schedule.objects.all()
         
         return queryset
 
-    def destroy(self, request, *args, **kwargs):
-        instance = Schedule.objects.get(id=self.kwargs['pk'])
-        instance.delete()
-    
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def destroy(self, request):
+        try:
+            instance = Schedule.objects.get(id=self.kwargs['pk'])
+            instance.delete()
+        
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"detail": "Não encontrado"},status=status.HTTP_400_BAD_REQUEST)
 
-    
     @action(methods=['GET','POST'], detail=False, url_path='canceled')
     def cancel_schedule(self, request):
         
