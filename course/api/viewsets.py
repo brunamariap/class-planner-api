@@ -164,6 +164,13 @@ class ScheduleViewSet(ModelViewSet):
             return queryset
         
         return queryset
+
+    def destroy(self, request, *args, **kwargs):
+        instance = Schedule.objects.get(id=self.kwargs['pk'])
+        instance.delete()
+    
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     
     @action(methods=['GET','POST'], detail=False, url_path='canceled')
     def cancel_schedule(self, request):
