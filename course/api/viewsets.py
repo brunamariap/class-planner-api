@@ -1,16 +1,18 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
-from ..models import Course, Class, Discipline, CourseDiscipline, Schedule, TemporaryClass, ClassCanceled
-from .serializers import CourseSerializer, ClassSerializer, CourseClassesSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer
-from student.models import Student
-from student.api.serializers import ClassStudentsSerializer
 from rest_framework.response import Response
 from rest_framework import status, generics
-from datetime import datetime,date
+
+from ..models import Course, Class, Discipline, CourseDiscipline, Schedule, TemporaryClass, ClassCanceled
+from .serializers import CourseSerializer, ClassSerializer, CourseClassesSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer
+
+from student.models import Student
+from student.api.serializers import ClassStudentsSerializer
+
+from datetime import date, timedelta, datetime
 from django.db.models import Sum
 from itertools import chain
 import math
-from datetime import date, timedelta, datetime
 
 
 class CourseViewSet(ModelViewSet):
@@ -22,9 +24,10 @@ class CourseViewSet(ModelViewSet):
         try:
             classes = Class.objects.filter(course_id=course_id)
             serializer = CourseClassesSerializer(classes, many=True)
+
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:
-            pass
+            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class DisciplineViewSet(ModelViewSet):
@@ -48,7 +51,7 @@ class DisciplineViewSet(ModelViewSet):
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except:
-            pass
+            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ImportDisciplineGenericView(generics.CreateAPIView):  
@@ -62,6 +65,7 @@ class ImportDisciplineGenericView(generics.CreateAPIView):
             list_codes = [object['code'] for object in all_disciplines]
             for discipline in disciplines_json_list:
                 if not discipline['Sigla'] in list_codes:
+                    list_codes.append(discipline['Sigla'])
                     is_optional = discipline['Optativo']
                     workload_in_class = int(discipline['CH Componente'][-2:])
     
@@ -96,7 +100,7 @@ class ImportDisciplineGenericView(generics.CreateAPIView):
 
             return Response(status=status.HTTP_204_NO_CONTENT)
         except:
-            Response(status=status.HTTP_400_BAD_REQUEST)
+           return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 class CourseDisciplinesGenericView(generics.ListAPIView):
@@ -108,15 +112,10 @@ class CourseDisciplinesGenericView(generics.ListAPIView):
             course_id = self.kwargs['course']
             disciplines = CourseDiscipline.objects.filter(course_id=course_id)
 
-            disciplines_ids = []
-            for obj in disciplines:
-                disciplines_ids.append(obj.discipline_id.id)
-
-            disciplines = CourseDiscipline.objects.filter(discipline_id__in=disciplines_ids)
             serializer = self.get_serializer(disciplines, many=True)
             return serializer.data
         except:
-            pass
+            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ClassViewSet(ModelViewSet):
@@ -130,7 +129,7 @@ class ClassViewSet(ModelViewSet):
             serializer = ClassStudentsSerializer(students, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:
-            pass
+            return Response(status=status.HTTP_404_NOT_FOUND)
     
     @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/schedules/week')
     def get_class_week_schedules(self, request, class_id, *args, **kwargs):
