@@ -114,14 +114,13 @@ class ScheduleSerializer(serializers.ModelSerializer):
     discipline = CourseSerializer(read_only=True)
     schedule_class = ClassSerializer(read_only=True)
 
-    temporary_class_id = serializers.SerializerMethodField('show_temporary_class_id')
     canceled_classes = serializers.SerializerMethodField('show_canceled_classes')
     classes_to_replace = serializers.SerializerMethodField('show_classes_to_replace') 
     class_date = serializers.SerializerMethodField('show_class_date')
 
     class Meta:
         model = Schedule
-        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'discipline_id', 'class_id', 'discipline', 'schedule_class', 'canceled_classes', 'classes_to_replace', 'temporary_class_id', 'class_date']
+        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'discipline_id', 'class_id', 'discipline', 'schedule_class', 'canceled_classes', 'classes_to_replace', 'class_date']
 
     def without_results(self, instance):
         return None
@@ -129,18 +128,6 @@ class ScheduleSerializer(serializers.ModelSerializer):
     def show_class_date(self, instance):
         try:
             return instance.date
-        except:
-            return None
-        
-    def show_temporary_class_id(self, instance):
-        try:
-            if hasattr(instance, 'temporary_class_id'):
-                if hasattr(instance.temporary_class_id, 'id'):
-                    return instance.temporary_class_id.id
-
-                return instance.temporary_class_id['id']
-            
-            return None
         except:
             return None
 
