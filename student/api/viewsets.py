@@ -1,13 +1,17 @@
 from rest_framework.viewsets import ModelViewSet
-from ..models import Student, StudentAlert
-from course.models import Discipline, Schedule, Class, TemporaryClass, ClassCanceled
-from course.api.serializers import ScheduleSerializer
-from .serializers import StudentSerializer, StudentAlertSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import serializers
 from rest_framework.decorators import action
+
+from ..models import Student, StudentAlert
+from .serializers import StudentSerializer, StudentAlertSerializer
+
+from course.models import Discipline, Schedule, Class, TemporaryClass, ClassCanceled
+from course.api.serializers import ScheduleSerializer
+
 from datetime import datetime, timedelta, date
+
 class StudentViewSet(ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
