@@ -29,7 +29,6 @@ class CourseViewSet(ModelViewSet):
         except:
             return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class DisciplineViewSet(ModelViewSet):
     queryset = Discipline.objects.all()
     serializer_class = DisciplineSerializer
@@ -136,32 +135,7 @@ class ClassViewSet(ModelViewSet):
         
         schedules = Schedule.objects.filter(class_id=class_id)
 
-        queryset = list(schedules)
-
-        canceled_schedule = ClassCanceled.objects.filter(schedule_id__id__in=schedules.values_list('id', flat=True))
-        classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedule)
-
-        if (classes_to_replace):
-            
-            for schedule in classes_to_replace.values():
-                canceled = ClassCanceled.objects.get(id=schedule['class_canceled_id_id'])
-                
-                current_day = date.today() if not hasattr(self.request.GET.get('date'), 'date') else datetime.strptime(self.request.GET.get('date'), '%d/%m/%Y').date()
-                
-                weekday = current_day.weekday()
-                sunday = current_day - timedelta(days=weekday+1)
-                weekdates = [sunday + timedelta(days=x) for x in range(7)]
-                
-                replace = Schedule.objects.get(id=canceled.schedule_id.id)
-                
-                replace.quantity = schedule['quantity']
-                replace.temporary_class_id = schedule
-                replace.discipline_id = Discipline.objects.get(id=schedule['discipline_id_id'])
-                
-                if canceled.canceled_date in weekdates:
-                    queryset.append(replace)
-
-        serializer = ScheduleSerializer(queryset, many=True, context={'request': request})
+        serializer = ScheduleSerializer(schedules, many=True, context={'request': request})
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
