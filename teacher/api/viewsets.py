@@ -1,5 +1,9 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import generics
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
 from ..models import Teacher
 
 from course.models import Discipline, Class, Teach, Schedule, CourseDiscipline, ClassCanceled, TemporaryClass
@@ -8,13 +12,11 @@ from course.api.serializers import DisciplineWithTeachSerializer, ClassSerialize
 from .serializers import TeacherSerializer
 from course.api.serializers import TeachSerializer
 
-from rest_framework import status
-from rest_framework.decorators import action
-from rest_framework.response import Response
 import calendar
 from datetime import date, timedelta, datetime
 from utils.generate_month_days import get_days_from_month
 import copy
+
 class TeacherViewSet(ModelViewSet):
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer
@@ -23,9 +25,10 @@ class TeacherViewSet(ModelViewSet):
     def create_teacher_binding(self, request):
         class_id = request.data['class_id']
         teacher_id = request.data['teacher_id']
+        discipline_id = request.data['discipline_id']
 
         already_exists = Teach.objects.filter(
-            class_id=class_id, teacher_id=teacher_id)
+            class_id=class_id, teacher_id=teacher_id, discipline_id=discipline_id)
         if (already_exists):
             return Response({"message": "Professor já está vinculado a esta turma"}, status=status.HTTP_400_BAD_REQUEST)
 
