@@ -13,7 +13,8 @@ from datetime import date, timedelta, datetime
 from django.db.models import Sum
 from itertools import chain
 import math
-
+import copy
+from utils.generate_month_days import get_days_from_month
 
 class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
@@ -131,11 +132,35 @@ class ClassViewSet(ModelViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
     
     @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/schedules/week')
-    def get_class_week_schedules(self, request, class_id, *args, **kwargs):
+    def get_week_schedules(self, request, class_id):
         
         schedules = Schedule.objects.filter(class_id=class_id)
         serializer = ScheduleSerializer(schedules, many=True, context={'request': request})
 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/schedules/month')
+    def get_month_schedules(self, request, class_id):
+        schedules = Schedule.objects.filter(class_id=class_id)
+            
+        current_month = date.today().month if not self.request.GET.get('month') else self.request.GET.get('month')            
+        days_of_month = get_days_from_month(int(current_month))
+        
+        month_schedules = []
+        queryset = list(schedules)
+
+        month_schedules = []
+
+        for week_schedule in days_of_month:
+
+            for current_schedule in queryset:
+                if week_schedule.weekday() == current_schedule.weekday:
+                    copy_of_schedule = copy.copy(current_schedule)
+                    copy_of_schedule.date = week_schedule
+                    month_schedules.append(copy_of_schedule)
+                
+        serializer = ScheduleSerializer(month_schedules, many=True, context={'request': request})
+        
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ScheduleViewSet(ModelViewSet):
