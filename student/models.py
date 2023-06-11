@@ -13,6 +13,9 @@ class Student(models.Model):
     class_id = models.ForeignKey(Class, on_delete=models.CASCADE, db_column='class_id')
     disciplines = models.ManyToManyField(Discipline) 
 
+    def __str__(self) -> str:
+        return f'{self.registration} - {self.name}'
+
 """ 
 class StudentDisciplines(models.Model):
     student_id = models.ForeignKey(Student, on_delete=models.CASCADE, db_column='student_id')
@@ -26,4 +29,4 @@ class StudentAlert(models.Model):
     discipline_id = models.ForeignKey(Discipline, on_delete=models.CASCADE, db_column='discipline_id')
     student_id = models.ForeignKey(Student, on_delete=models.CASCADE, db_column='student_id')
     created_at = models.DateTimeField(auto_now_add=True)
-    reason = models.TextField(max_length=200, blank=True, null=True)
+    reason = models.TextField(max_length=200, blank=True, null=True, default=None)

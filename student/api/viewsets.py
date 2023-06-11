@@ -83,3 +83,17 @@ class StudentViewSet(ModelViewSet):
 class StudentAlertViewSet(ModelViewSet):
     queryset = StudentAlert.objects.all()
     serializer_class = StudentAlertSerializer
+
+    def create(self, request, *args, **kwargs):
+        discipline = Discipline.objects.get(id=request.data['discipline_id'])
+        student = Student.objects.get(id=request.data['student_id'])
+        reason = request.data['reason'] if 'reason' in request.data else None
+        
+        alert_create = StudentAlert.objects.create(discipline_id=discipline,
+                                                   student_id=student,
+                                                   reason = reason)
+        alert_create.save()
+
+        serializer = StudentAlertSerializer(StudentAlert.objects.last())
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
