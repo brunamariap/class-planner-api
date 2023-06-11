@@ -18,9 +18,9 @@ class ClassStudentsSerializer(serializers.ModelSerializer):
 
 
 class StudentAlertSerializer(serializers.ModelSerializer):
-    discipline = DisciplineSerializer()
-    student = StudentSerializer()
+    discipline_id = DisciplineSerializer(read_only=True)
+    student_id = StudentSerializer(read_only=True)
 
     class Meta:
         model = StudentAlert
-        fields = ['id', 'discipline', 'student','created_at','reason']
+        fields = ['id', 'discipline_id', 'student_id', 'created_at', 'reason']
