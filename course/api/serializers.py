@@ -2,6 +2,7 @@ from rest_framework import serializers
 from ..models import Course, Discipline, Class, Schedule, Teach, CourseDiscipline, TemporaryClass, ClassCanceled
 from datetime import datetime, timedelta, date
 
+
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
