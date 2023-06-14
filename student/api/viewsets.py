@@ -13,6 +13,8 @@ from course.api.serializers import ScheduleSerializer,DisciplineSerializer
 from datetime import datetime, timedelta, date
 from utils.generate_month_days import get_days_from_month
 import copy
+
+
 class StudentViewSet(ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer

@@ -17,6 +17,7 @@ from datetime import date, timedelta, datetime
 from utils.generate_month_days import get_days_from_month
 import copy
 
+
 class TeacherViewSet(ModelViewSet):
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer

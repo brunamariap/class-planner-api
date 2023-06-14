@@ -9,12 +9,15 @@ from .serializers import CourseSerializer, ClassSerializer, CourseClassesSeriali
 from student.models import Student
 from student.api.serializers import ClassStudentsSerializer
 
-from datetime import date, timedelta, datetime
+from utils.generate_month_days import get_days_from_month
+from utils.report_canceled_class import report_canceled_class
+
+from datetime import date, datetime
 from django.db.models import Sum
 from itertools import chain
 import math
 import copy
-from utils.generate_month_days import get_days_from_month
+
 
 class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
@@ -211,6 +214,9 @@ class ScheduleViewSet(ModelViewSet):
             serializer.save()
 
             headers = self.get_success_headers(serializer.data)
+            class_canceled = ClassCanceled.objects.last()
+
+            report_canceled_class(class_canceled)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         
