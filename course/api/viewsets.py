@@ -216,7 +216,7 @@ class ScheduleViewSet(ModelViewSet):
             headers = self.get_success_headers(serializer.data)
             class_canceled = ClassCanceled.objects.last()
 
-            report_students = report_canceled_class(class_canceled)
+            report_canceled_class(class_canceled)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         
