@@ -152,6 +152,21 @@ class CourseDisciplinesGenericView(generics.ListAPIView):
 class ClassViewSet(ModelViewSet):
     queryset = Class.objects.all()
     serializer_class = ClassSerializer
+
+    def create(self, request, *args, **kwargs):
+        class_already_exists = Class.objects.filter(course_id=request.data['course_id'],
+                                                    reference_period=request.data['reference_period'],
+                                                    shift=request.data['shift'])
+        
+        if class_already_exists:
+            return Response({"message": "A turma já existe"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+    
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         
     @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/students')
     def get_class_students(self, request, class_id, *args, **kwargs):
