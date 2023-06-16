@@ -5,7 +5,7 @@ class Course(models.Model):
     class Meta:
         db_table = 'course'
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
     degree = models.CharField(max_length=20)
     course_load = models.IntegerField()
     byname = models.CharField(max_length=10)  
