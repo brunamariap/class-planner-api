@@ -7,18 +7,63 @@ from rest_framework.decorators import action
 from ..models import Student, StudentAlert
 from .serializers import StudentSerializer, StudentAlertSerializer
 
-from course.models import Discipline, Schedule, Class, TemporaryClass, ClassCanceled
+from course.models import Discipline, Schedule, Class, Course, CourseDiscipline
 from course.api.serializers import ScheduleSerializer,DisciplineSerializer
 
-from datetime import datetime, timedelta, date
+from datetime import date
 from utils.generate_month_days import get_days_from_month
 import copy
-
 
 class StudentViewSet(ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
+
+    def create(self, request):
+        student_disciplines = request.data['disciplines']
+        student_course = request.data['course']
+        student_class_shift = request.data['shift']
+
+        disciplines = Discipline.objects.filter(code__in=student_disciplines)
+        course = Course.objects.get(name=student_course)
+        
+        relation = CourseDiscipline.objects.filter(discipline_id__in=disciplines, course_id=course.id)
+        
+        period = None
+        for course_discipline in relation.values():
+            currentPeriod = course_discipline['period']
+
+            if (period == None):
+                period = currentPeriod
+            elif (currentPeriod is not None and currentPeriod < period):
+                period = currentPeriod
+
+        student_class = Class.objects.get(course_id=course, reference_period=period, shift=student_class_shift)
+        
+        request.data['class_id'] = student_class.id
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        # new_student = Student.objects.create()
+
+        return None
     
+    @action(methods=['GET'], detail=False, url_path='(?P<student_registration>[^/.]+)/is-registered')
+    def get_is_registered(self, request, student_registration):
+        try:
+            student = Student.objects.get(registration=student_registration)
+
+            serializer = StudentSerializer(student);
+            
+            return Response(serializer.data, status=status.HTTP_200_OK
+            )
+        except:
+            return Response(
+                {'details': 'Não encontrado'}, status=status.HTTP_400_BAD_REQUEST)
+
     @action(methods=['GET'], detail=False, url_path='(?P<student_id>[^/.]+)/schedules/week')
     def get_week_schedules(self, request, student_id):
         try:
