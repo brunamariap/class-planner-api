@@ -51,18 +51,17 @@ class StudentViewSet(ModelViewSet):
 
         return None
     
-    @action(methods=['GET'], detail=False, url_path='(?P<student_registration>[^/.]+)/is-registered')
-    def get_is_registered(self, request, student_registration):
+    @action(methods=['GET'], detail=False, url_path='byregistration/(?P<student_registration>[^/.]+)')
+    def get_student_by_registration(self, request, student_registration):
         try:
             student = Student.objects.get(registration=student_registration)
 
-            serializer = StudentSerializer(student);
+            serializer = StudentSerializer(student)
             
-            return Response(serializer.data, status=status.HTTP_200_OK
-            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except:
             return Response(
-                {'details': 'Não encontrado'}, status=status.HTTP_400_BAD_REQUEST)
+                {'data': None, 'details': 'Não encontrado'}, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=False, url_path='(?P<student_id>[^/.]+)/schedules/week')
     def get_week_schedules(self, request, student_id):
