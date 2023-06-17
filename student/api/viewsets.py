@@ -65,29 +65,24 @@ class StudentViewSet(ModelViewSet):
 
     @action(methods=['GET'], detail=False, url_path='(?P<student_id>[^/.]+)/schedules/week')
     def get_week_schedules(self, request, student_id):
-        try:
-            student = Student.objects.get(id=student_id)
-            
-            disciplines = Discipline.objects.filter(id__in=student.disciplines.values_list('id', flat=True))
-            classes = Class.objects.filter(course_id=student.class_id.course_id)
-            schedules = Schedule.objects.filter(class_id__in=classes.values_list('id', flat=True), discipline_id__in=disciplines.values_list("id", flat=True))
-            
-            serializer = ScheduleSerializer(schedules, many=True, context={'request': request})
-            
-            return Response(
-                serializer.data, status=status.HTTP_200_OK
-            )
-        except:
-            return Response(
-                {'details': 'Não encontrado'}, status=status.HTTP_400_BAD_REQUEST
-            )
+        student = Student.objects.get(id=student_id)
+        
+        disciplines = Discipline.objects.filter(id__in=student.disciplines.values_list('id', flat=True))
+        classes = Class.objects.filter(course_id=student.class_id.course_id, shift=student.class_id.shift)
+        schedules = Schedule.objects.filter(class_id__in=classes.values_list('id', flat=True), discipline_id__in=disciplines.values_list("id", flat=True))
+        
+        serializer = ScheduleSerializer(schedules, many=True, context={'request': request})
+        
+        return Response(
+            serializer.data, status=status.HTTP_200_OK
+        )
         
     @action(methods=['GET'], detail=False, url_path='(?P<student_id>[^/.]+)/schedules/month')
     def get_month_schedules(self, request, student_id):
         student = Student.objects.get(id=student_id)
 
         disciplines = Discipline.objects.filter(id__in=student.disciplines.values_list('id', flat=True))
-        classes = Class.objects.filter(course_id=student.class_id.course_id)
+        classes = Class.objects.filter(course_id=student.class_id.course_id, shift=student.class_id.shift)
         schedules = Schedule.objects.filter(class_id__in=classes.values_list('id', flat=True), discipline_id__in=disciplines.values_list("id", flat=True))
             
         current_month = date.today().month if not self.request.GET.get('month') else self.request.GET.get('month')            

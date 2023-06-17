@@ -2,7 +2,6 @@ from rest_framework import serializers
 from ..models import Course, Discipline, Class, Schedule, Teach, CourseDiscipline, TemporaryClass, ClassCanceled
 from datetime import datetime, timedelta, date
 
-
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
@@ -64,9 +63,20 @@ class DisciplineSerializer(serializers.ModelSerializer):
 
 
 class TeachSerializer(serializers.ModelSerializer):
+    teacher = serializers.SerializerMethodField('show_teacher', required=False)
+
+    def show_teacher(self, instance):
+        from teacher.api.serializers import TeacherSerializer
+
+        try:
+            serializer = TeacherSerializer(instance.teacher_id)
+
+            return serializer.data
+        except:
+            return None
     class Meta:
         model = Teach
-        fields = ['id', 'teacher_id', 'discipline_id', 'class_id']
+        fields = ['id', 'teacher_id', 'teacher', 'discipline_id', 'class_id']
 
 
 class DisciplineWithTeachSerializer(serializers.ModelSerializer):
@@ -80,7 +90,7 @@ class DisciplineWithTeachSerializer(serializers.ModelSerializer):
     def show_course_period(self, instance):
         course_discipline_objects = CourseDiscipline.objects.filter(
             discipline_id=instance.id)
-
+        
         course_period = []
         for object in course_discipline_objects.values():
             course_period.extend(
@@ -117,8 +127,8 @@ class ClassCanceledSerializer(serializers.ModelSerializer):
         fields = ['id','schedule_id', 'canceled_date','reason', 'is_available', 'quantity_available', 'teacher_ids']
 
 class ScheduleSerializer(serializers.ModelSerializer):
-    discipline = CourseSerializer(read_only=True)
-    schedule_class = ClassSerializer(read_only=True)
+    discipline = serializers.SerializerMethodField('show_discipline', required=False)
+    schedule_class = serializers.SerializerMethodField('show_class', required=False)
 
     canceled_classes = serializers.SerializerMethodField('show_canceled_classes')
     classes_to_replace = serializers.SerializerMethodField('show_classes_to_replace') 
@@ -126,8 +136,18 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Schedule
-        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'discipline_id', 'class_id', 'discipline', 'schedule_class', 'canceled_classes', 'classes_to_replace', 'class_date']
+        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'class_id', 'schedule_class', 'discipline_id', 'discipline', 'canceled_classes', 'classes_to_replace', 'class_date']
 
+    def show_discipline(self, instance):
+        serializer = DisciplineWithTeachSerializer(instance.discipline_id)
+
+        return serializer.data 
+    
+    def show_class(self, instance):
+        serializer = ClassSerializer(instance.class_id)
+
+        return serializer.data 
+    
     def without_results(self, instance):
         return None
 
