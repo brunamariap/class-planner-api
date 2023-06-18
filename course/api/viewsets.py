@@ -41,26 +41,56 @@ class DisciplineViewSet(ModelViewSet):
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            courses_length = request.data['course_period']
-
             serializer.save()
-            for i in range(len(courses_length)):
+            associations_with_discipline = request.data['course_period']
+
+            for i in range(len(associations_with_discipline)):
                 course_link_already_exists = CourseDiscipline.objects.filter(discipline_id=Discipline.objects.last(),
                                                                              course_id=Course.objects.get(
-                                                                                id=request.data['course_period'][i]['course_id']),
-                                                                             period=request.data['course_period'][i]['period'])
+                                                                                id=request.data['course_period'][i]['course_id']))
+
+                if not course_link_already_exists:
+                    create_course_link = CourseDiscipline.objects.create(discipline_id=Discipline.objects.last(),
+                                                                         course_id=Course.objects.get(
+                                                                            id=request.data['course_period'][i]['course_id']),
+                                                                         period=request.data['course_period'][i]['period'])
+                    create_course_link.save()
                 
-                if course_link_already_exists:
-                    return Response({"message": "A associação dessa disciplina com esse curso já existe"}, status=status.HTTP_400_BAD_REQUEST)
-                
-                course_create = CourseDiscipline.objects.create(discipline_id=Discipline.objects.all().last(),
-                                                                course_id=Course.objects.get(
-                                                                    id=request.data['course_period'][i]['course_id']),
-                                                                period=request.data['course_period'][i]['period'])
-                course_create.save()
+                """ if course_link_already_exists:
+                    return Response({"message": "A associação dessa disciplina com esse curso já existe"}, status=status.HTTP_400_BAD_REQUEST) """
 
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except:
+            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            partial = kwargs.pop('partial', False)
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+
+            associations_with_discipline = request.data['course_period']
+            courses_associated_with_discipline = CourseDiscipline.objects.filter(discipline_id=Discipline.objects.get(id=self.kwargs['pk'])).values_list('course_id', flat=True)
+
+            for i in range(len(associations_with_discipline)):
+                course_link_already_exists = True if request.data['course_period'][i]['course_id'] in courses_associated_with_discipline else None
+
+                if not course_link_already_exists:
+                    create_course_link = CourseDiscipline.objects.create(discipline_id=Discipline.objects.get(id=self.kwargs['pk']),
+                                                                         course_id=Course.objects.get(
+                                                                            id=request.data['course_period'][i]['course_id']),
+                                                                         period=request.data['course_period'][i]['period'])
+                    create_course_link.save()
+
+            if getattr(instance, '_prefetched_objects_cache', None):
+                # If 'prefetch_related' has been applied to a queryset, we need to
+                # forcibly invalidate the prefetch cache on the instance.
+                instance._prefetched_objects_cache = {}
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except:
             return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
