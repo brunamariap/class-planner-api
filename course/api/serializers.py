@@ -130,13 +130,13 @@ class ScheduleSerializer(serializers.ModelSerializer):
     discipline = serializers.SerializerMethodField('show_discipline', required=False)
     schedule_class = serializers.SerializerMethodField('show_class', required=False)
 
-    canceled_classes = serializers.SerializerMethodField('show_canceled_classes')
-    classes_to_replace = serializers.SerializerMethodField('show_classes_to_replace') 
+    canceled_class = serializers.SerializerMethodField('show_canceled_classes')
+    class_to_replace = serializers.SerializerMethodField('show_classes_to_replace') 
     class_date = serializers.SerializerMethodField('show_class_date')
 
     class Meta:
         model = Schedule
-        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'class_id', 'schedule_class', 'discipline_id', 'discipline', 'canceled_classes', 'classes_to_replace', 'class_date']
+        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'class_id', 'schedule_class', 'discipline_id', 'discipline', 'canceled_class', 'class_to_replace', 'class_date']
 
     def show_discipline(self, instance):
         serializer = DisciplineWithTeachSerializer(instance.discipline_id)
@@ -179,15 +179,16 @@ class ScheduleSerializer(serializers.ModelSerializer):
             serializer = ClassCanceledSerializer(data=week_canceled_schedules, many=True)
             serializer.is_valid()
 
-            return serializer.data
+            if len(serializer.data) > 0:
+                return serializer.data[0]
 
-        return []
+        return None
     
     def show_classes_to_replace(self, instance):
         canceled_schedules = ClassCanceled.objects.filter(schedule_id=instance.id)
         
         if len(canceled_schedules) < 1:
-            return []
+            return None
         
         reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date() if 'date' in self.context['request'].query_params else date.today()
         classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedules)
@@ -211,5 +212,8 @@ class ScheduleSerializer(serializers.ModelSerializer):
         
         serializer = TemporaryClassSerializer(data=week_replaced_classes, many=True)
         serializer.is_valid()
+
+        if len(serializer.data) == 0:
+            return None
 
         return serializer.data
