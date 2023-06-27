@@ -14,7 +14,6 @@ from utils.report_canceled_class import report_canceled_class
 
 from datetime import date, datetime
 from django.db.models import Sum
-from itertools import chain
 import math
 import copy
 

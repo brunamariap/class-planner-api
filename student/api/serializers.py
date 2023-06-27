@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from course.api.serializers import ClassSerializer, DisciplineSerializer
+from course.api.serializers import DisciplineSerializer
 from course.models import Discipline
 from ..models import Student, StudentAlert
 
