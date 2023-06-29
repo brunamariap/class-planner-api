@@ -196,6 +196,20 @@ class ClassViewSet(ModelViewSet):
     
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    
+    @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/disciplines')
+    def get_class_disciplines(self, request, class_id):
+        try:
+            student_class = Class.objects.get(id=class_id)
+            
+            course_discipline = CourseDiscipline.objects.filter(period=student_class.reference_period, course_id=student_class.course_id.id)
+            disciplines = Discipline.objects.filter(id__in=course_discipline.values_list('discipline_id',flat=True))
+            
+            serializer = DisciplineSerializer(disciplines, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
         
     @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/students')
     def get_class_students(self, request, class_id, *args, **kwargs):
