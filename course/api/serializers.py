@@ -60,7 +60,7 @@ class DisciplineSerializer(serializers.ModelSerializer):
                 [{'course_id': object['course_id_id'], 'period': object['period']}])
 
         return course_period
-
+    
 
 class TeachSerializer(serializers.ModelSerializer):
     teacher = serializers.SerializerMethodField('show_teacher', required=False)
@@ -89,7 +89,7 @@ class DisciplineWithTeachSerializer(serializers.ModelSerializer):
 
     def show_course_period(self, instance):
         course_discipline_objects = CourseDiscipline.objects.filter(
-            discipline_id=instance.id)
+            discipline_id=instance['id'])
         
         course_period = []
         for object in course_discipline_objects.values():
@@ -99,9 +99,9 @@ class DisciplineWithTeachSerializer(serializers.ModelSerializer):
         return course_period
     
     def show_taught_by(self, instance):
-        
+            
         if instance:
-            data = instance.teach_set
+            data = Teach.objects.filter(discipline_id=instance['id'], class_id=instance['class_id'])
             serializer = TeachSerializer(data, many=True)
 
             return serializer.data

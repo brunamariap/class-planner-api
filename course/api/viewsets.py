@@ -3,8 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status, generics
 
-from ..models import Course, Class, Discipline, CourseDiscipline, Schedule, TemporaryClass, ClassCanceled
-from .serializers import CourseSerializer, ClassSerializer, CourseClassesSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer
+from ..models import Course, Class, Discipline, CourseDiscipline, Schedule, TemporaryClass, ClassCanceled, Teach
+from .serializers import CourseSerializer, ClassSerializer, CourseClassesSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer, DisciplineWithTeachSerializer
 
 from student.models import Student
 from student.api.serializers import ClassStudentsSerializer
@@ -200,19 +200,23 @@ class ClassViewSet(ModelViewSet):
     
     @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/disciplines')
     def get_class_disciplines(self, request, class_id):
-        try:
-            student_class = Class.objects.get(id=class_id)
-            
-            course_discipline = CourseDiscipline.objects.filter(period=student_class.reference_period, course_id=student_class.course_id.id)
-            disciplines = Discipline.objects.filter(id__in=course_discipline.values_list('discipline_id',flat=True))
-            
-            serializer = DisciplineSerializer(disciplines, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        student_class = Class.objects.get(id=class_id)
+        
+        course_discipline = CourseDiscipline.objects.filter(period=student_class.reference_period, course_id=student_class.course_id.id)
+        disciplines = Discipline.objects.filter(id__in=course_discipline.values_list('discipline_id',flat=True))
+        
+        queryset = []
+        for i in disciplines.values():
+            i['class_id'] = class_id
+            queryset.append(i)
+        
+        serializer = DisciplineWithTeachSerializer(data=queryset, many=True)
+        serializer.is_valid()
+        return Response(serializer.data, status=status.HTTP_200_OK)
         
     @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/students')
-    def get_class_students(self, request, class_id, *args, **kwargs):
+    def get_class_students(self, request, class_id):
         try:
             students = Student.objects.filter(class_id=class_id)
             serializer = ClassStudentsSerializer(students, many=True)

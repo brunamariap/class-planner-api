@@ -90,11 +90,13 @@ class TeacherDisciplinesViewSet(generics.ListAPIView):
         try:
             teacher_id = self.kwargs['teacher']
             teach = Teach.objects.filter(
-                teacher_id=teacher_id).values_list('discipline_id', flat=True)
+                teacher_id=teacher_id)
+            disciplines = Discipline.objects.filter(id__in=teach.values_list('discipline_id',flat=True))
+            
             queryset = []
-            for id in teach:
-                queryset.append(Discipline.objects.get(id=id))
-
+            for i in disciplines.values():
+                i['class_id'] = 0
+                queryset.append(i)
             return queryset
         except ValueError:
             print(ValueError)
