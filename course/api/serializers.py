@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from ..models import Course, Discipline, Class, Schedule, Teach, CourseDiscipline, TemporaryClass, ClassCanceled
 from datetime import datetime, timedelta, date
-
+from teacher.api.serializers import TeacherSerializer
+from teacher.models import Teacher
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
@@ -52,12 +53,17 @@ class DisciplineSerializer(serializers.ModelSerializer):
 
     def show_course_period(self, instance):
         course_discipline_objects = CourseDiscipline.objects.filter(
-            discipline_id=instance.id)
-
+            discipline_id=instance['id'])
+        
         course_period = []
         for object in course_discipline_objects.values():
-            course_period.extend(
-                [{'course_id': object['course_id_id'], 'period': object['period']}])
+            course = Course.objects.get(id=object['course_id_id'])
+            serializer = CourseSerializer(course)
+            
+            formattedCourse = serializer.data
+            formattedCourse.update({'period': object['period']})
+
+            course_period.append(formattedCourse)
 
         return course_period
     
@@ -93,18 +99,24 @@ class DisciplineWithTeachSerializer(serializers.ModelSerializer):
         
         course_period = []
         for object in course_discipline_objects.values():
-            course_period.extend(
-                [{'course_id': object['course_id_id'], 'period': object['period']}])
+            course = Course.objects.get(id=object['course_id_id'])
+            serializer = CourseSerializer(course)
+            
+            formattedCourse = serializer.data
+            formattedCourse.update({'period': object['period']})
+
+            course_period.append(formattedCourse)
 
         return course_period
     
     def show_taught_by(self, instance):
-            
         if instance:
-            data = Teach.objects.filter(discipline_id=instance['id'], class_id=instance['class_id'])
-            serializer = TeachSerializer(data, many=True)
+            teach = Teach.objects.filter(discipline_id=instance['id'], class_id=instance['class_id'])
+            teachers = Teacher.objects.filter(id__in=teach.values_list('teacher_id', flat=True))
+            
+            data = TeacherSerializer(teachers, many=True)
 
-            return serializer.data
+            return data.data
     
         return None
 
@@ -139,7 +151,14 @@ class ScheduleSerializer(serializers.ModelSerializer):
         fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'class_id', 'schedule_class', 'discipline_id', 'discipline', 'canceled_class', 'class_to_replace', 'class_date']
 
     def show_discipline(self, instance):
-        serializer = DisciplineWithTeachSerializer(instance.discipline_id)
+        discipline = Discipline.objects.filter(id=instance.discipline_id.id)
+        
+        data = []
+        for i in discipline.values():
+            i['class_id'] = instance.class_id
+            data.append(i)
+
+        serializer = DisciplineWithTeachSerializer(data[0])
 
         return serializer.data 
     

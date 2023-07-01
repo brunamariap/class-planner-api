@@ -7,9 +7,9 @@ from ..models import Student, StudentAlert
 from .serializers import StudentSerializer, StudentAlertSerializer
 
 from course.models import Discipline, Schedule, Class, Course, CourseDiscipline
-from course.api.serializers import ScheduleSerializer,DisciplineSerializer
+from course.api.serializers import ScheduleSerializer,DisciplineSerializer, DisciplineWithTeachSerializer
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from utils.generate_month_days import get_days_from_month
 import copy
 
@@ -70,7 +70,22 @@ class StudentViewSet(ModelViewSet):
         classes = Class.objects.filter(course_id=student.class_id.course_id, shift=student.class_id.shift)
         schedules = Schedule.objects.filter(class_id__in=classes.values_list('id', flat=True), discipline_id__in=disciplines.values_list("id", flat=True))
         
-        serializer = ScheduleSerializer(schedules, many=True, context={'request': request})
+        week_schedules = []
+        today_date = datetime.strptime(request.query_params['date'], '%d/%m/%Y').date() if 'date' in request.query_params else date.today()
+
+        for day in range(5):
+            today = today_date.weekday()  # Obtém o número do dia da semana atual
+            days_diff = day - today  # Calcula a diferença de dias
+            
+            result = today_date + timedelta(days=days_diff)  # Calcula a data convertida
+            print(result)
+            for current_schedule in list(schedules):
+                if result.weekday() == current_schedule.weekday:
+                    copy_of_schedule = copy.copy(current_schedule)
+                    copy_of_schedule.date = result
+                    week_schedules.append(copy_of_schedule)
+
+        serializer = ScheduleSerializer(week_schedules, many=True, context={'request': request})
         
         return Response(
             serializer.data, status=status.HTTP_200_OK
@@ -109,15 +124,18 @@ class StudentViewSet(ModelViewSet):
         try:
             student = Student.objects.get(id=student_id)
             disciplines = Discipline.objects.filter(id__in=student.disciplines.values_list('id', flat=True))
-            
-            serializer = DisciplineSerializer(disciplines, many=True, context={'request': request})
+            data = []
+            for i in disciplines.values():
+                i['class_id'] = student.class_id
+                data.append(i)
+            serializer = DisciplineWithTeachSerializer(data, many=True, context={'request': request})
             
             return Response(
                 serializer.data, status=status.HTTP_200_OK
             )
         except:
             return Response(
-                {'details': 'Não encontrado'}, status=status.HTTP_400_BAD_REQUEST
+                {'details': 'Não encontrado'}, status=status.HTTP_404_NOT_FOUND
             )
 
 class StudentAlertViewSet(ModelViewSet):
