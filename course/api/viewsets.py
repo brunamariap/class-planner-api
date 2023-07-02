@@ -31,6 +31,25 @@ class CourseViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:
             return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @action(methods=['DELETE'], detail=False, url_path='(?P<course_id>[^/.]+)/disciplines/(?P<discipline_id>[^/.]+)')
+    def destroy_discipline_link(self, request, course_id, discipline_id, *args, **kwargs):
+        try:
+            discipline_link_exists = CourseDiscipline.objects.filter(discipline_id=discipline_id)
+
+            if discipline_link_exists:
+                course_discipline = CourseDiscipline.objects.filter(course_id=course_id, discipline_id=discipline_id)
+                if course_discipline:
+                    course_discipline.delete()
+
+                    if discipline_link_exists.count() == 1:
+                        discipline = Discipline.objects.get(id=discipline_id)
+                        discipline.delete()
+                
+            return Response([], status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class DisciplineViewSet(ModelViewSet):
     queryset = Discipline.objects.all()
@@ -41,18 +60,18 @@ class DisciplineViewSet(ModelViewSet):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            associations_with_discipline = request.data['course_period']
+            associations_with_discipline = request.data['course']
 
             for i in range(len(associations_with_discipline)):
                 course_link_already_exists = CourseDiscipline.objects.filter(discipline_id=Discipline.objects.last(),
                                                                              course_id=Course.objects.get(
-                                                                                id=request.data['course_period'][i]['course_id']))
+                                                                                id=request.data['course'][i]['course_id']))
 
                 if not course_link_already_exists:
                     create_course_link = CourseDiscipline.objects.create(discipline_id=Discipline.objects.last(),
                                                                          course_id=Course.objects.get(
-                                                                            id=request.data['course_period'][i]['course_id']),
-                                                                         period=request.data['course_period'][i]['period'])
+                                                                            id=request.data['course'][i]['course_id']),
+                                                                         period=request.data['course'][i]['period'])
                     create_course_link.save()
                 
                 """ if course_link_already_exists:
@@ -71,17 +90,17 @@ class DisciplineViewSet(ModelViewSet):
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
 
-            associations_with_discipline = request.data['course_period']
+            associations_with_discipline = request.data['course']
             courses_associated_with_discipline = CourseDiscipline.objects.filter(discipline_id=Discipline.objects.get(id=self.kwargs['pk'])).values_list('course_id', flat=True)
 
             for i in range(len(associations_with_discipline)):
-                course_link_already_exists = True if request.data['course_period'][i]['course_id'] in courses_associated_with_discipline else None
+                course_link_already_exists = True if request.data['course'][i]['course_id'] in courses_associated_with_discipline else None
 
                 if not course_link_already_exists:
                     create_course_link = CourseDiscipline.objects.create(discipline_id=Discipline.objects.get(id=self.kwargs['pk']),
                                                                          course_id=Course.objects.get(
-                                                                            id=request.data['course_period'][i]['course_id']),
-                                                                         period=request.data['course_period'][i]['period'])
+                                                                            id=request.data['course'][i]['course_id']),
+                                                                         period=request.data['course'][i]['period'])
                     create_course_link.save()
 
             if getattr(instance, '_prefetched_objects_cache', None):
@@ -119,7 +138,7 @@ class ImportDisciplineGenericView(generics.CreateAPIView):
                         "is_optional": True if is_optional == 'Sim' else False,
                         "workload_in_class":workload_in_class,
                         "workload_in_clock":int(math.ceil(workload_in_class*45)/60),
-                        "course_period":[
+                        "course":[
                             {
                                 "course_id": course_obj,
                                 "period": period

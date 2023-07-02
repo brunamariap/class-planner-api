@@ -12,30 +12,38 @@ class CourseSerializer(serializers.ModelSerializer):
 class CourseDisciplineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Discipline
-        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional']
+        fields = ['id', 'name', 'code', 'workload_in_class', 'workload_in_clock', 'is_optional']
 
 
 class CourseDisciplinePeriodSerializer(serializers.ModelSerializer):
-    #discipline = serializers.SerializerMethodField('show_discipline')
-    discipline_id = CourseDisciplineSerializer(read_only=True)
-
     class Meta:
         model = CourseDiscipline
-        fields = ['discipline_id', 'period']
+        fields = ['id', 'discipline_id', 'period']
+
+    #discipline = serializers.SerializerMethodField('show_discipline')
+    discipline_id = CourseDisciplineSerializer(read_only=True)
+    #course_degree = serializers.SerializerMethodField('show_course_degree')
+
+    def show_course_degree(self, instance):
+        
+        course = Course.objects.get(id=instance.course_id.id)
+        
+        degree = course.degree
+
+        return degree
 
     def show_discipline(self, instance):
-        if instance:  
-            print('instancia: ', instance.discipline_id)
-            """ discipline_obj = Discipline.objects.get(id=instance.discipline_id) """
-            #print(discipline_obj)
-            discipline = Discipline.objects.get(id=instance.discipline_id.id)
-            serializer =  CourseDisciplineSerializer(data=discipline)
-            print(serializer)
-            serializer.is_valid()
-            print('data',serializer.data)
-            #discipline = CourseDisciplineSerializer(discipline_obj)
-            #print(discipline)
-            return serializer.data
+        #course_discipline_objects = CourseDiscipline.objects.filter(id=instance.id)  
+        #print('e',course_discipline_objects)
+        #for object in course_discipline_objects.values():
+        discipline = Discipline.objects.get(id=instance.discipline_id_id)
+        serializer =  CourseDisciplineSerializer(data=discipline)
+        print(discipline)
+            
+        print('instancia: ', dir(instance.discipline_id))
+        print('\n\nteste: ', type(instance.discipline_id))
+        
+        return serializer.data 
         
 
 class CourseClassesSerializer(serializers.ModelSerializer):
@@ -45,15 +53,15 @@ class CourseClassesSerializer(serializers.ModelSerializer):
 
 
 class DisciplineSerializer(serializers.ModelSerializer):
-    course_period = serializers.SerializerMethodField('show_course_period')
+    course = serializers.SerializerMethodField('show_course_period')
 
     class Meta:
         model = Discipline
-        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional', 'course_period']
+        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional', 'course']
 
     def show_course_period(self, instance):
         course_discipline_objects = CourseDiscipline.objects.filter(
-            discipline_id=instance['id'])
+            discipline_id=instance.id)
         
         course_period = []
         for object in course_discipline_objects.values():
@@ -86,16 +94,16 @@ class TeachSerializer(serializers.ModelSerializer):
 
 
 class DisciplineWithTeachSerializer(serializers.ModelSerializer):
-    course_period = serializers.SerializerMethodField('show_course_period')
+    course = serializers.SerializerMethodField('show_course_period')
     taught_by = serializers.SerializerMethodField('show_taught_by')
 
     class Meta:
         model = Discipline
-        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional', 'course_period', 'taught_by']
+        fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional', 'course', 'taught_by']
 
     def show_course_period(self, instance):
         course_discipline_objects = CourseDiscipline.objects.filter(
-            discipline_id=instance['id'])
+            discipline_id=instance.id)
         
         course_period = []
         for object in course_discipline_objects.values():
