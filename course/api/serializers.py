@@ -18,31 +18,21 @@ class CourseDisciplineSerializer(serializers.ModelSerializer):
 class CourseDisciplinePeriodSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseDiscipline
-        fields = ['id', 'discipline_id', 'period']
+        fields = ['id', 'discipline', 'course_degree', 'period']
 
-    #discipline = serializers.SerializerMethodField('show_discipline')
-    discipline_id = CourseDisciplineSerializer(read_only=True)
-    #course_degree = serializers.SerializerMethodField('show_course_degree')
+    discipline = serializers.SerializerMethodField('show_discipline')
+    course_degree = serializers.SerializerMethodField('show_course_degree')
 
     def show_course_degree(self, instance):
-        
         course = Course.objects.get(id=instance.course_id.id)
-        
         degree = course.degree
 
         return degree
 
     def show_discipline(self, instance):
-        #course_discipline_objects = CourseDiscipline.objects.filter(id=instance.id)  
-        #print('e',course_discipline_objects)
-        #for object in course_discipline_objects.values():
-        discipline = Discipline.objects.get(id=instance.discipline_id_id)
-        serializer =  CourseDisciplineSerializer(data=discipline)
-        print(discipline)
-            
-        print('instancia: ', dir(instance.discipline_id))
-        print('\n\nteste: ', type(instance.discipline_id))
-        
+        discipline = Discipline.objects.get(id=instance.discipline_id.id)
+        serializer =  CourseDisciplineSerializer(discipline)
+    
         return serializer.data 
         
 

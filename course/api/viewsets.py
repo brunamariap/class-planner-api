@@ -32,6 +32,16 @@ class CourseViewSet(ModelViewSet):
         except:
             return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+    @action(methods=['GET'], detail=False, url_path='(?P<course_id>[^/.]+)/disciplines')
+    def get_disciplines_of_courses(self, request, course_id, *args, **kwargs):
+        try:
+            disciplines = CourseDiscipline.objects.filter(course_id=course_id)
+            serializer = CourseDisciplinePeriodSerializer(disciplines, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
     @action(methods=['DELETE'], detail=False, url_path='(?P<course_id>[^/.]+)/disciplines/(?P<discipline_id>[^/.]+)')
     def destroy_discipline_link(self, request, course_id, discipline_id, *args, **kwargs):
         try:
@@ -180,21 +190,6 @@ class ImportDisciplineGenericView(generics.CreateAPIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except:
            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-
-class CourseDisciplinesGenericView(generics.ListAPIView):
-    queryset = CourseDiscipline.objects.all()
-    serializer_class = CourseDisciplinePeriodSerializer
-
-    def get_queryset(self):
-        try:
-            course_id = self.kwargs['course']
-            disciplines = CourseDiscipline.objects.filter(course_id=course_id)
-
-            serializer = self.get_serializer(disciplines, many=True)
-            return serializer.data
-        except:
-            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ClassViewSet(ModelViewSet):
