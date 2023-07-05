@@ -49,7 +49,21 @@ class TeacherViewSet(ModelViewSet):
         classes = Class.objects.filter(id__in=teach.values_list('class_id', flat=True)).values_list('id', flat=True)
         schedules = Schedule.objects.filter(class_id__in=classes, discipline_id__in=disciplines)
 
-        serializer = ScheduleSerializer(schedules, many=True, context={'request': request})
+        week_schedules = []
+        today_date = datetime.strptime(request.query_params['date'], '%d/%m/%Y').date() if 'date' in request.query_params else date.today()
+
+        for day in range(5):
+            today = today_date.weekday()  # Obtém o número do dia da semana atual
+            days_diff = day - today  # Calcula a diferença de dias
+            
+            result = today_date + timedelta(days=days_diff)
+            for current_schedule in list(schedules):
+                if result.weekday() == current_schedule.weekday:
+                    copy_of_schedule = copy.copy(current_schedule)
+                    copy_of_schedule.date = result
+                    week_schedules.append(copy_of_schedule)
+
+        serializer = ScheduleSerializer(week_schedules, many=True, context={'request': request})
 
         return  Response(serializer.data, status=status.HTTP_200_OK)
     
