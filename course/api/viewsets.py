@@ -16,11 +16,27 @@ from datetime import date, datetime
 from django.db.models import Sum
 import math
 import copy
+from rest_framework import permissions
 
 
 class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        disciplines = CourseDiscipline.objects.filter(course_id=instance)
+
+        for object in disciplines:
+            total_disciplines_associations = CourseDiscipline.objects.filter(discipline_id=object.discipline_id).count()
+         
+            if total_disciplines_associations == 1:
+                discipline = Discipline.objects.get(id=object.discipline_id.id)
+                discipline.delete()
+
+        self.perform_destroy(instance)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['GET'], detail=False, url_path='(?P<course_id>[^/.]+)/classes')
     def get_classes_of_courses(self, request, course_id, *args, **kwargs):
@@ -41,9 +57,13 @@ class CourseViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:
             return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    @action(methods=['DELETE'], detail=False, url_path='(?P<course_id>[^/.]+)/disciplines/(?P<discipline_id>[^/.]+)')
-    def destroy_discipline_link(self, request, course_id, discipline_id, *args, **kwargs):
+
+
+class DeleteDisciplineLinkView(generics.DestroyAPIView):
+    def destroy(self, request, *args, **kwargs):
+        discipline_id = self.kwargs['discipline']
+        course_id = self.kwargs['course']
+
         try:
             discipline_link_exists = CourseDiscipline.objects.filter(discipline_id=discipline_id)
 
@@ -269,6 +289,7 @@ class ClassViewSet(ModelViewSet):
         serializer = ScheduleSerializer(month_schedules, many=True, context={'request': request})
         
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class ScheduleViewSet(ModelViewSet):
     queryset = Schedule.objects.all()
