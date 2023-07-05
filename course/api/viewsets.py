@@ -279,14 +279,15 @@ class ScheduleViewSet(ModelViewSet):
         
         return queryset
 
-    def destroy(self, request):
-        try:
-            instance = Schedule.objects.get(id=self.kwargs['pk'])
-            instance.delete()
+    # def destroy(self, request, class_id):
+    #     try:
+    #         print(class_id)
+    #         instance = Schedule.objects.get(id=class_id)
+    #         instance.delete()
         
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except:
-            return Response({"detail": "Não encontrado"},status=status.HTTP_400_BAD_REQUEST)
+    #         return Response(status=status.HTTP_204_NO_CONTENT)
+    #     except:
+    #         return Response({"detail": "Não encontrado"},status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['GET','POST'], detail=False, url_path='canceled')
     def cancel_schedule(self, request):
