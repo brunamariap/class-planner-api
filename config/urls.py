@@ -4,7 +4,8 @@ from django.urls import path
 from django.conf.urls import include
 from rest_framework import routers
 
-from course.api.viewsets import CourseViewSet, ClassViewSet, DisciplineViewSet, ScheduleViewSet, TemporaryClassViewSet, ImportDisciplineGenericView
+from course.api.viewsets import CourseViewSet, ClassViewSet, DisciplineViewSet, ScheduleViewSet, TemporaryClassViewSet, ImportDisciplineGenericView, DeleteDisciplineLinkView
+
 from teacher.api.viewsets import TeacherViewSet, TeacherClassesViewSet, TeacherDisciplinesViewSet, TeacherBindingViewSet
 
 from student.api.viewsets import StudentViewSet, StudentAlertViewSet
@@ -26,6 +27,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/teachers/disciplines/<int:pk>/', TeacherBindingViewSet.as_view()),
     path('api/courses/<int:course>/disciplines/import/', ImportDisciplineGenericView.as_view()),
+    path('api/courses/<int:course>/disciplines/<int:discipline>/', DeleteDisciplineLinkView.as_view()),
     path('api/teachers/<int:teacher>/disciplines/', TeacherDisciplinesViewSet.as_view()),
     path('api/teachers/<int:teacher>/classes/', TeacherClassesViewSet.as_view()),
 
