@@ -73,6 +73,8 @@ class TeachSerializer(serializers.ModelSerializer):
         from teacher.api.serializers import TeacherSerializer
 
         try:
+            
+            print('é aqui?', instance)
             serializer = TeacherSerializer(instance.teacher_id)
 
             return serializer.data
@@ -92,20 +94,39 @@ class DisciplineWithTeachSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'code', 'workload_in_clock', 'workload_in_class', 'is_optional', 'course', 'taught_by']
 
     def show_course_period(self, instance):
-        course_discipline_objects = CourseDiscipline.objects.filter(
+        try:
+            course_discipline_objects = CourseDiscipline.objects.filter(
             discipline_id=instance.id)
         
-        course_period = []
-        for object in course_discipline_objects.values():
-            course = Course.objects.get(id=object['course_id_id'])
-            serializer = CourseSerializer(course)
+            course_period = []
+            for object in course_discipline_objects.values():
+                course = Course.objects.get(id=object['course_id_id'])
+                serializer = CourseSerializer(course)
+                
+                formattedCourse = serializer.data
+                formattedCourse.update({'period': object['period']})
+
+                course_period.append(formattedCourse)
+
+            return course_period
+        except:
+            try:
+                course_discipline_objects = CourseDiscipline.objects.filter(
+                discipline_id=instance['id'])
             
-            formattedCourse = serializer.data
-            formattedCourse.update({'period': object['period']})
+                course_period = []
+                for object in course_discipline_objects.values():
+                    course = Course.objects.get(id=object['course_id_id'])
+                    serializer = CourseSerializer(course)
+                    
+                    formattedCourse = serializer.data
+                    formattedCourse.update({'period': object['period']})
 
-            course_period.append(formattedCourse)
+                    course_period.append(formattedCourse)
 
-        return course_period
+                return course_period
+            except:
+                return None
     
     def show_taught_by(self, instance):
         if instance:

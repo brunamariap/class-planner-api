@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from ..models import Student, StudentAlert
 from .serializers import StudentSerializer, StudentAlertSerializer
 
+from teacher.models import Teacher
 from course.models import Discipline, Schedule, Class, Course, CourseDiscipline
 from course.api.serializers import ScheduleSerializer,DisciplineSerializer, DisciplineWithTeachSerializer
 
@@ -144,14 +145,18 @@ class StudentAlertViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         discipline = Discipline.objects.get(id=request.data['discipline_id'])
+        teacher = Teacher.objects.get(id=request.data['teacher_id'])
         student = Student.objects.get(id=request.data['student_id'])
         reason = request.data['reason'] if 'reason' in request.data else None
         
         alert_create = StudentAlert.objects.create(discipline_id=discipline,
                                                    student_id=student,
+                                                   teacher_id=teacher,
                                                    reason = reason)
         alert_create.save()
 
-        serializer = StudentAlertSerializer(StudentAlert.objects.last())
+        alert = StudentAlert.objects.last()
+        
+        serializer = StudentAlertSerializer(alert)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
