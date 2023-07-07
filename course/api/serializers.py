@@ -173,7 +173,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Schedule
-        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'class_id', 'schedule_class', 'discipline_id', 'discipline', 'canceled_class', 'class_to_replace', 'class_date']
+        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'class_id', 'schedule_class', 'discipline', 'canceled_class', 'class_to_replace', 'class_date']
 
     def show_discipline(self, instance):
         discipline = Discipline.objects.filter(id=instance.discipline_id.id)
