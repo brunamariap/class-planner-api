@@ -16,7 +16,7 @@ from datetime import date, datetime, timedelta
 from django.db.models import Sum
 import math
 import copy
-from rest_framework import permissions
+from django.db import transaction
 
 
 class CourseViewSet(ModelViewSet):
@@ -38,6 +38,7 @@ class CourseViewSet(ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
     @action(methods=['GET'], detail=False, url_path='(?P<course_id>[^/.]+)/classes')
     def get_classes_of_courses(self, request, course_id, *args, **kwargs):
         try:
@@ -47,6 +48,7 @@ class CourseViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:
             return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         
     @action(methods=['GET'], detail=False, url_path='(?P<course_id>[^/.]+)/disciplines')
     def get_disciplines_of_courses(self, request, course_id, *args, **kwargs):
@@ -120,11 +122,12 @@ class DisciplineViewSet(ModelViewSet):
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
 
-            associations_with_discipline = request.data['course']
-            courses_associated_with_discipline = CourseDiscipline.objects.filter(discipline_id=Discipline.objects.get(id=self.kwargs['pk'])).values_list('course_id', flat=True)
+            associations_with_discipline = len(request.data['course'])
+            courses_associated_with_discipline = CourseDiscipline.objects.filter(discipline_id=Discipline.objects.get(id=self.kwargs['pk']))
+            len(courses_associated_with_discipline)
 
-            for i in range(len(associations_with_discipline)):
-                course_link_already_exists = True if request.data['course'][i]['course_id'] in courses_associated_with_discipline else None
+            for i in range(associations_with_discipline):
+                course_link_already_exists = True if request.data['course'][i]['course_id'] in courses_associated_with_discipline.values_list('course_id', flat=True) else None
 
                 if not course_link_already_exists:
                     create_course_link = CourseDiscipline.objects.create(discipline_id=Discipline.objects.get(id=self.kwargs['pk']),
@@ -132,6 +135,11 @@ class DisciplineViewSet(ModelViewSet):
                                                                             id=request.data['course'][i]['course_id']),
                                                                          period=request.data['course'][i]['period'])
                     create_course_link.save()
+                else:
+                    if courses_associated_with_discipline[i].period != request.data['course'][i]['period']:
+                        with transaction.atomic():
+                            courses_associated_with_discipline[i].period = request.data['course'][i]['period']
+                            courses_associated_with_discipline[i].save()
 
             if getattr(instance, '_prefetched_objects_cache', None):
                 # If 'prefetch_related' has been applied to a queryset, we need to
@@ -139,6 +147,7 @@ class DisciplineViewSet(ModelViewSet):
                 instance._prefetched_objects_cache = {}
 
             return Response(serializer.data, status=status.HTTP_200_OK)
+        
         except:
             return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -249,6 +258,7 @@ class ClassViewSet(ModelViewSet):
         serializer.is_valid()
         return Response(serializer.data, status=status.HTTP_200_OK)
         
+
     @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/students')
     def get_class_students(self, request, class_id):
         try:
@@ -258,6 +268,7 @@ class ClassViewSet(ModelViewSet):
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
     
+
     @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/schedules/week')
     def get_week_schedules(self, request, class_id):
         
@@ -281,6 +292,7 @@ class ClassViewSet(ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+
     @action(methods=['GET'], detail=False, url_path='(?P<class_id>[^/.]+)/schedules/month')
     def get_month_schedules(self, request, class_id):
         schedules = Schedule.objects.filter(class_id=class_id)
@@ -361,6 +373,7 @@ class ScheduleViewSet(ModelViewSet):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         
+
     @action(methods=['DELETE'], detail=False, url_path='canceled/(?P<class_canceled_id>[^/.]+)')
     def cancel_class_cancellation(self, request, class_canceled_id):
         try:
@@ -398,6 +411,7 @@ class TemporaryClassViewSet(ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
 
