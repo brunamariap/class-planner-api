@@ -158,63 +158,64 @@ class ImportDisciplineGenericView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
-            disciplines_json_list = request.data
-            all_disciplines = Discipline.objects.all().values()
-            list_codes = [object['code'] for object in all_disciplines]
-            course_obj = Course.objects.get(id=self.kwargs['course'])
+            with transaction.atomic:
+                disciplines_json_list = request.data
+                all_disciplines = Discipline.objects.all().values()
+                list_codes = [object['code'] for object in all_disciplines]
+                course_obj = Course.objects.get(id=self.kwargs['course'])
 
-            for discipline in disciplines_json_list:
-                period = None if discipline['Período'] == '-' else int(discipline['Período'])
+                for discipline in disciplines_json_list:
+                    period = None if discipline['Período'] == '-' else int(discipline['Período'])
 
-                if not discipline['Sigla'] in list_codes:
-                    list_codes.append(discipline['Sigla'])
-                    is_optional = discipline['Optativo']
-                    workload_in_class = int(discipline['CH Componente'][-2:])
-    
-                    discipline_dict = {
-                        "name":discipline['Componente'],
-                        "code":discipline['Sigla'],
-                        "is_optional": True if is_optional == 'Sim' else False,
-                        "workload_in_class":workload_in_class,
-                        "workload_in_clock":int(math.ceil(workload_in_class*45)/60),
-                        "course":[
-                            {
-                                "course_id": course_obj,
-                                "period": period
-                            }
-                        ]
-                    }
+                    if not discipline['Sigla'] in list_codes:
+                        list_codes.append(discipline['Sigla'])
+                        is_optional = discipline['Optativo']
+                        workload_in_class = int(discipline['CH Componente'][-2:])
+        
+                        discipline_dict = {
+                            "name":discipline['Componente'],
+                            "code":discipline['Sigla'],
+                            "is_optional": True if is_optional == 'Sim' else False,
+                            "workload_in_class":workload_in_class,
+                            "workload_in_clock":int(math.ceil(workload_in_class*45)/60),
+                            "course":[
+                                {
+                                    "course_id": course_obj,
+                                    "period": period
+                                }
+                            ]
+                        }
 
-                    serializer = self.get_serializer(data=discipline_dict)
-                    serializer.is_valid(raise_exception=True)
-                    serializer.save()
+                        serializer = self.get_serializer(data=discipline_dict)
+                        serializer.is_valid(raise_exception=True)
+                        serializer.save()
 
-                    course_link_already_exists = CourseDiscipline.objects.filter(discipline_id=Discipline.objects.last(),
-                                                                                 course_id=course_obj,
-                                                                                 period=period)
-                
-                    if course_link_already_exists:
-                        return Response({"message": "A associação dessa disciplina com esse curso já existe"}, status=status.HTTP_400_BAD_REQUEST)
-
-                    course_create = CourseDiscipline.objects.create(discipline_id=Discipline.objects.all().last(),
-                                                                    course_id=course_obj,
-                                                                    period=period)
-                    course_create.save()
-                else:
-                    discipline_code = discipline['Sigla']
-                    discipline_obj = Discipline.objects.get(code=discipline_code)
+                        course_link_already_exists = CourseDiscipline.objects.filter(discipline_id=Discipline.objects.last(),
+                                                                                    course_id=course_obj,
+                                                                                    period=period)
                     
-                    course_link_already_exists = CourseDiscipline.objects.filter(discipline_id=discipline_obj,
-                                                                                 course_id=course_obj,
-                                                                                 period=period)
-                
-                    if course_link_already_exists:
-                        return Response({"message": "A associação dessa disciplina com esse curso já existe"}, status=status.HTTP_400_BAD_REQUEST)
+                        if course_link_already_exists:
+                            return Response({"message": "A associação dessa disciplina com esse curso já existe"}, status=status.HTTP_400_BAD_REQUEST)
+
+                        course_create = CourseDiscipline.objects.create(discipline_id=Discipline.objects.all().last(),
+                                                                        course_id=course_obj,
+                                                                        period=period)
+                        course_create.save()
+                    else:
+                        discipline_code = discipline['Sigla']
+                        discipline_obj = Discipline.objects.get(code=discipline_code)
+                        
+                        course_link_already_exists = CourseDiscipline.objects.filter(discipline_id=discipline_obj,
+                                                                                    course_id=course_obj,
+                                                                                    period=period)
                     
-                    course_create = CourseDiscipline.objects.create(discipline_id=discipline_obj,
-                                                                    course_id=course_obj,
-                                                                    period=period)
-                    course_create.save()
+                        if course_link_already_exists:
+                            return Response({"message": "A associação dessa disciplina com esse curso já existe"}, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        course_create = CourseDiscipline.objects.create(discipline_id=discipline_obj,
+                                                                        course_id=course_obj,
+                                                                        period=period)
+                        course_create.save()
 
             return Response(status=status.HTTP_204_NO_CONTENT)
         except:
