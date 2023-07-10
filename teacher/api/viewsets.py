@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from ..models import Teacher
 
 from course.models import Discipline, Class, Teach, Schedule, CourseDiscipline, ClassCanceled, TemporaryClass
-from course.api.serializers import DisciplineWithTeachSerializer, ClassSerializer, ScheduleSerializer
+from course.api.serializers import DisciplineWithTeachSerializer, ClassSerializer, ScheduleSerializer, TeacherDisciplineSerializer
 
 from .serializers import TeacherSerializer
 from course.api.serializers import TeachSerializer
@@ -95,26 +95,24 @@ class TeacherViewSet(ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class TeacherDisciplinesViewSet(generics.ListAPIView):
 
     queryset = Discipline.objects.all()
-    serializer_class = DisciplineWithTeachSerializer
+    serializer_class = TeacherDisciplineSerializer
 
-    def get_queryset(self):
+    def list(self, request, *args, **kwargs):
         try:
             teacher_id = self.kwargs['teacher']
             teach = Teach.objects.filter(
                 teacher_id=teacher_id)
-            disciplines = Discipline.objects.filter(id__in=teach.values_list('discipline_id',flat=True))
             
-            queryset = []
-            for i in disciplines.values():
-                i['class_id'] = 0
-                queryset.append(i)
-            return queryset
+            serializer = TeacherDisciplineSerializer(teach, many=True, context={'teacher_id': teacher_id})
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except ValueError:
             print(ValueError)
-            pass
+
 
 class TeacherClassesViewSet(generics.ListAPIView):
 
