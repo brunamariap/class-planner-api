@@ -184,8 +184,7 @@ class ClassSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Class
-        fields = ['id', 'course_id', 'course',
-                  'reference_period', 'shift', 'class_leader_id', ]
+        fields = ['id', 'course_id', 'course', 'reference_period', 'shift', 'class_leader_id', ]
 
     def show_course(self, instance):
         course = Course.objects.get(id=instance.course_id.id)
@@ -198,7 +197,7 @@ class TemporaryClassSerializer(serializers.ModelSerializer):
     teacher = serializers.SerializerMethodField('show_teacher')
 
     class Meta:
-        model = TemporaryClass]
+        model = TemporaryClass
         fields = ['id', 'class_canceled_id', 'quantity', 'teacher_id', 'teacher', 'discipline_id', 'discipline']
 
     def show_discipline(self, instance):
@@ -213,7 +212,7 @@ class TemporaryClassSerializer(serializers.ModelSerializer):
 
         serializer = TeacherSerializer(discipline)
 
-        return serializer.data]
+        return serializer.data
 
 
 class ClassCanceledSerializer(serializers.ModelSerializer):
