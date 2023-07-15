@@ -77,8 +77,6 @@ class TeachSerializer(serializers.ModelSerializer):
         from teacher.api.serializers import TeacherSerializer
 
         try:
-
-            print('é aqui?', instance)
             serializer = TeacherSerializer(instance.teacher_id)
 
             return serializer.data
@@ -196,10 +194,26 @@ class ClassSerializer(serializers.ModelSerializer):
 
 
 class TemporaryClassSerializer(serializers.ModelSerializer):
+    discipline = serializers.SerializerMethodField('show_discipline')
+    teacher = serializers.SerializerMethodField('show_teacher')
+
     class Meta:
-        model = TemporaryClass
-        fields = ['id', 'class_canceled_id',
-                  'quantity', 'teacher_id', 'discipline_id']
+        model = TemporaryClass]
+        fields = ['id', 'class_canceled_id', 'quantity', 'teacher_id', 'teacher', 'discipline_id', 'discipline']
+
+    def show_discipline(self, instance):
+        discipline = Discipline.objects.get(id=instance['discipline_id'].id)
+
+        serializer = DisciplineSerializer(discipline)
+
+        return serializer.data
+    
+    def show_teacher(self, instance):
+        discipline = Teacher.objects.get(id=instance['teacher_id'].id)
+
+        serializer = TeacherSerializer(discipline)
+
+        return serializer.data]
 
 
 class ClassCanceledSerializer(serializers.ModelSerializer):
@@ -281,16 +295,32 @@ class ScheduleSerializer(serializers.ModelSerializer):
         return None
 
     def show_classes_to_replace(self, instance):
-        canceled_schedules = ClassCanceled.objects.filter(
-            schedule_id=instance.id)
+        
+        reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date() if 'date' in self.context['request'].query_params else date.today()
 
+        canceled_schedules = ClassCanceled.objects.filter(schedule_id=instance.id, canceled_date=reference_date)
+        
         if len(canceled_schedules) < 1:
             return None
 
-        reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date(
-        ) if 'date' in self.context['request'].query_params else date.today()
-        classes_to_replace = TemporaryClass.objects.filter(
-            class_canceled_id__id__in=canceled_schedules)
+        classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedules)
+        
+        if self.context['student_id']:
+            print('entrei ne')
+            from student.api.serializers import StudentSerializer
+            from student.models import Student
+
+            try:
+                student = Student.objects.get(id=self.context['student_id'])
+                student_values = StudentSerializer(student)
+                student_disciplines = Discipline.objects.filter(code__in=student_values.data['disciplines']).values_list('code', flat=True)
+
+                wasReplaced = TemporaryClass.objects.get(class_canceled_id=canceled_schedules.first().id)
+                
+                if wasReplaced.discipline_id.code not in student_disciplines:
+                    return None 
+            except:
+                pass
 
         week_replaced_classes = []
 
@@ -318,4 +348,4 @@ class ScheduleSerializer(serializers.ModelSerializer):
         if len(serializer.data) == 0:
             return None
 
-        return serializer.data
+        return serializer.data[0]

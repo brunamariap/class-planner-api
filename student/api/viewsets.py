@@ -7,7 +7,7 @@ from ..models import Student, StudentAlert
 from .serializers import StudentSerializer, StudentAlertSerializer
 
 from teacher.models import Teacher
-from course.models import Discipline, Schedule, Class, Course, CourseDiscipline
+from course.models import Discipline, Schedule, Class, Course, CourseDiscipline, ClassCanceled, TemporaryClass
 from course.api.serializers import ScheduleSerializer,DisciplineSerializer, DisciplineWithTeachSerializer
 
 from datetime import date, datetime, timedelta
@@ -66,6 +66,8 @@ class StudentViewSet(ModelViewSet):
     @action(methods=['GET'], detail=False, url_path='(?P<student_id>[^/.]+)/schedules/week')
     def get_week_schedules(self, request, student_id):
         student = Student.objects.get(id=student_id)
+        student_values = StudentSerializer(student)
+        student_disciplines = Discipline.objects.filter(code__in=student_values.data['disciplines']).values_list('code', flat=True)
         
         disciplines = Discipline.objects.filter(id__in=student.disciplines.values_list('id', flat=True))
         classes = Class.objects.filter(course_id=student.class_id.course_id, shift=student.class_id.shift)
@@ -73,20 +75,32 @@ class StudentViewSet(ModelViewSet):
         
         week_schedules = []
         today_date = datetime.strptime(request.query_params['date'], '%d/%m/%Y').date() if 'date' in request.query_params else date.today()
-
+        
         for day in range(5):
             today = today_date.weekday()  # Obtém o número do dia da semana atual
             days_diff = day - today  # Calcula a diferença de dias
             
             result = today_date + timedelta(days=days_diff)  # Calcula a data convertida
-            print(result)
             for current_schedule in list(schedules):
+                
+
                 if result.weekday() == current_schedule.weekday:
+                    try:
+                        wasCanceled = ClassCanceled.objects.get(schedule_id=current_schedule.id, canceled_date=result)
+                        wasReplaced = TemporaryClass.objects.get(class_canceled_id=wasCanceled.id)
+                        
+                        if wasReplaced.discipline_id.code not in student_disciplines:
+                            current_schedule['show_replaced_class'] = False
+                            continue 
+                    except:
+                        pass
+
                     copy_of_schedule = copy.copy(current_schedule)
                     copy_of_schedule.date = result
                     week_schedules.append(copy_of_schedule)
 
-        serializer = ScheduleSerializer(week_schedules, many=True, context={'request': request})
+        
+        serializer = ScheduleSerializer(week_schedules, many=True, context={'request': request, 'student_id': student_id })
         
         return Response(
             serializer.data, status=status.HTTP_200_OK
