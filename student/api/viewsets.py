@@ -75,12 +75,14 @@ class StudentViewSet(ModelViewSet):
         
         week_schedules = []
         today_date = datetime.strptime(request.query_params['date'], '%d/%m/%Y').date() if 'date' in request.query_params else date.today()
-        
+        today_date += timedelta(days=1)
+
         for day in range(5):
-            today = today_date.weekday()  # Obtém o número do dia da semana atual
-            days_diff = day - today  # Calcula a diferença de dias
+            today = today_date.weekday()
+            days_diff = day - today
             
-            result = today_date + timedelta(days=days_diff)  # Calcula a data convertida
+            result = today_date + timedelta(days=days_diff)
+
             for current_schedule in list(schedules):
                 
 
@@ -130,7 +132,7 @@ class StudentViewSet(ModelViewSet):
                     copy_of_schedule.date = week_schedule
                     month_schedules.append(copy_of_schedule)
                 
-        serializer = ScheduleSerializer(month_schedules, many=True, context={'request': request})
+        serializer = ScheduleSerializer(month_schedules, many=True, context={'request': request, 'student_id': student_id })
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     
