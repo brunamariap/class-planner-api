@@ -297,29 +297,14 @@ class ScheduleSerializer(serializers.ModelSerializer):
         
         reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date() if 'date' in self.context['request'].query_params else date.today()
 
-        canceled_schedules = ClassCanceled.objects.filter(schedule_id=instance.id, canceled_date=reference_date)
+        canceled_schedules = ClassCanceled.objects.filter(schedule_id=instance.id)
         
         if len(canceled_schedules) < 1:
             return None
 
         classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedules)
         
-        if self.context['student_id']:
-            print('entrei ne')
-            from student.api.serializers import StudentSerializer
-            from student.models import Student
-
-            try:
-                student = Student.objects.get(id=self.context['student_id'])
-                student_values = StudentSerializer(student)
-                student_disciplines = Discipline.objects.filter(code__in=student_values.data['disciplines']).values_list('code', flat=True)
-
-                wasReplaced = TemporaryClass.objects.get(class_canceled_id=canceled_schedules.first().id)
-                
-                if wasReplaced.discipline_id.code not in student_disciplines:
-                    return None 
-            except:
-                pass
+        
 
         week_replaced_classes = []
 
@@ -334,6 +319,22 @@ class ScheduleSerializer(serializers.ModelSerializer):
                 id=schedule['class_canceled_id_id'])
 
             if canceled_class.canceled_date in weekdates:
+                if self.context['student_id']:
+                    from student.api.serializers import StudentSerializer
+                    from student.models import Student
+
+                    try:
+                        student = Student.objects.get(id=self.context['student_id'])
+                        student_values = StudentSerializer(student)
+                        student_disciplines = Discipline.objects.filter(code__in=student_values.data['disciplines']).values_list('code', flat=True)
+
+                        wasReplaced = TemporaryClass.objects.get(class_canceled_id=canceled_class.id)
+                        
+                        if wasReplaced.discipline_id.code not in student_disciplines:
+                            return None 
+                    except:
+                        pass
+
                 schedule['class_canceled_id'] = schedule['class_canceled_id_id']
                 schedule['teacher_id'] = schedule['teacher_id_id']
                 schedule['discipline_id'] = schedule['discipline_id_id']
