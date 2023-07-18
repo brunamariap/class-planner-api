@@ -91,10 +91,11 @@ class TeachSerializer(serializers.ModelSerializer):
 class TeacherDisciplineSerializer(serializers.ModelSerializer):
     course = serializers.SerializerMethodField('show_course_period')
     discipline = serializers.SerializerMethodField('show_discipline')
+    teach_class = serializers.SerializerMethodField('show_class')
 
     class Meta:
         model = Teach
-        fields = ['id', 'discipline', 'course']
+        fields = ['id', 'discipline', 'course', 'teach_class']
 
     def show_course_period(self, instance, *args, **kwargs):
         try:
@@ -112,11 +113,19 @@ class TeacherDisciplineSerializer(serializers.ModelSerializer):
 
     def show_discipline(self, instance):
         try:
-            discipline = Discipline.objects.get(id=instance.discipline_id.id)
             serializer = CourseDisciplineSerializer(instance.discipline_id)
             discipline = serializer.data
 
             return discipline
+        except:
+            return None
+        
+    def show_class(self, instance):
+        try:
+            serializer = ClassSerializer(instance.class_id)
+            teach_class = serializer.data
+
+            return teach_class
         except:
             return None
 
