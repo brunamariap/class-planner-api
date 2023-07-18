@@ -259,9 +259,11 @@ class ClassCanceledScheduleSerializer(serializers.ModelSerializer):
 
 class ClassCanceledSerializer(serializers.ModelSerializer):
     schedule = serializers.SerializerMethodField('show_schedule')
+    schedule_class = serializers.SerializerMethodField('show_schedule_class')
+
     class Meta:
         model = ClassCanceled
-        fields = ['id', 'schedule_id', 'schedule', 'canceled_date', 'reason', 'canceled_by', 'teacher_to_replace', 'replace_class_status']
+        fields = ['id', 'schedule_id', 'schedule', 'canceled_date', 'reason', 'canceled_by', 'teacher_to_replace', 'replace_class_status', 'schedule_class']
 
     def show_schedule(self, instance):
         try:
@@ -279,6 +281,27 @@ class ClassCanceledSerializer(serializers.ModelSerializer):
                 return serializer.data
             except:
                 return None
+            
+    def show_schedule_class(self, instance):
+        try:
+            schedule = Schedule.objects.get(id=instance['schedule_id'].id)
+
+            schedule_class = Class.objects.get(id=schedule.class_id.id)
+            serializer = ClassSerializer(schedule_class)
+
+            return serializer.data
+        except:
+            try:
+                schedule = Schedule.objects.get(id=instance.schedule_id.id)
+
+                schedule_class = Class.objects.get(id=schedule.class_id.id)
+                serializer = ClassSerializer(schedule_class)
+
+                return serializer.data
+
+            except:
+                return None
+
 
 class ScheduleSerializer(serializers.ModelSerializer):
     discipline = serializers.SerializerMethodField(
@@ -343,7 +366,10 @@ class ScheduleSerializer(serializers.ModelSerializer):
             serializer.is_valid()
 
             if len(serializer.data) > 0:
-                return serializer.data[0]
+                format_schedule = {'id': week_canceled_schedules[0]['id']}
+                format_schedule.update(serializer.data[0])
+
+                return format_schedule
 
         return None
 
@@ -371,21 +397,22 @@ class ScheduleSerializer(serializers.ModelSerializer):
                 id=schedule['class_canceled_id_id'])
 
             if canceled_class.canceled_date in weekdates:
-                if self.context['student_id']:
-                    from student.api.serializers import StudentSerializer
-                    from student.models import Student
+                if 'student_id' in self.context:
+                    if self.context['student_id']:
+                        from student.api.serializers import StudentSerializer
+                        from student.models import Student
 
-                    try:
-                        student = Student.objects.get(id=self.context['student_id'])
-                        student_values = StudentSerializer(student)
-                        student_disciplines = Discipline.objects.filter(code__in=student_values.data['disciplines']).values_list('code', flat=True)
+                        try:
+                            student = Student.objects.get(id=self.context['student_id'])
+                            student_values = StudentSerializer(student)
+                            student_disciplines = Discipline.objects.filter(code__in=student_values.data['disciplines']).values_list('code', flat=True)
 
-                        wasReplaced = TemporaryClass.objects.get(class_canceled_id=canceled_class.id)
-                        
-                        if wasReplaced.discipline_id.code not in student_disciplines:
-                            return None 
-                    except:
-                        pass
+                            wasReplaced = TemporaryClass.objects.get(class_canceled_id=canceled_class.id)
+                            
+                            if wasReplaced.discipline_id.code not in student_disciplines:
+                                return None 
+                        except:
+                            pass
 
                 schedule['class_canceled_id'] = schedule['class_canceled_id_id']
                 schedule['teacher_id'] = schedule['teacher_id_id']
