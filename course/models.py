@@ -69,12 +69,17 @@ class ClassCanceled(models.Model):
     class Meta:
         db_table = 'class_canceled'
 
+    class Status(models.TextChoices):
+        PENDING = 'Pendente'
+        REFUSED = 'Recusado'
+        ACCEPTED = 'Aceito'
+
     schedule_id = models.ForeignKey(Schedule, on_delete=models.CASCADE, db_column='schedule_id')
     canceled_date = models.DateField()
     reason = models.TextField(max_length=200, blank=True, null=True)
-    is_available = models.BooleanField()
-    quantity_available = models.IntegerField()
-    teacher_ids = models.ManyToManyField(Teacher, db_table='substitute_teachers', db_column='teacher_ids', blank=True)
+    replace_class_status = models.CharField(max_length=10, choices=Status.choices, default='Pendente', blank=True)
+    canceled_by = models.IntegerField()
+    teacher_to_replace = models.ForeignKey(Teacher, db_column='teacher_to_replace', blank=True, on_delete=models.DO_NOTHING, null=True)
 
 class Teach(models.Model):
     class Meta:
@@ -89,6 +94,5 @@ class TemporaryClass(models.Model):
         db_table = 'temporary_class'
 
     class_canceled_id = models.ForeignKey(ClassCanceled, on_delete=models.CASCADE, db_column='class_canceled_id')
-    quantity = models.IntegerField()
     teacher_id = models.ForeignKey(Teacher, on_delete=models.CASCADE, db_column='teacher_id')
     discipline_id = models.ForeignKey(Discipline, on_delete=models.CASCADE, db_column='discipline_id')

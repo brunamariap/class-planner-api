@@ -300,7 +300,7 @@ class ClassViewSet(ModelViewSet):
                     week_schedules.append(copy_of_schedule)
 
         serializer = ScheduleSerializer(
-            week_schedules, many=True, context={'request': request})
+            week_schedules, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -374,9 +374,6 @@ class ScheduleViewSet(ModelViewSet):
             if (already_exists):
                 return Response({'message': 'Esta aula já foi cancelada na data informada'}, status=status.HTTP_400_BAD_REQUEST)
 
-            if (schedule.quantity < request.data['quantity_available']):
-                return Response({'message': f'Quantidade solicitada para disponibilizar aulas é maior que a quantidade ofertada no horário selecionado. Há {schedule.quantity} aulas desta disciplina'}, status=status.HTTP_400_BAD_REQUEST)
-
             serializer = ClassCanceledSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
@@ -403,39 +400,11 @@ class TemporaryClassViewSet(ModelViewSet):
     queryset = TemporaryClass.objects.all()
     serializer_class = TemporaryClassSerializer
 
-    def create(self, request):
-        already_replaced = TemporaryClass.objects.filter(
-            class_canceled_id=request.data['class_canceled_id']).aggregate(total_quantity=Sum('quantity'))
+    # def create(self, request):
 
-        if (already_replaced['total_quantity']):
-            class_canceled = ClassCanceled.objects.get(
-                id=request.data['class_canceled_id'])
-            remaining_amount = class_canceled.quantity_available - \
-                already_replaced['total_quantity']
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
 
-            if (remaining_amount > 0 and request.data['quantity'] > remaining_amount):
-                return Response({"message": f"Quantidade solicitada é superior a disponível. Há {remaining_amount} aulas disponíveis"}, status=status.HTTP_400_BAD_REQUEST)
-            elif (remaining_amount < 1):
-                return Response({"message": "Não há mais aulas disponíveis para serem substituídas"}, status=status.HTTP_400_BAD_REQUEST)
-
-            class_canceled.quantity_available = remaining_amount - \
-                request.data['quantity']
-            class_canceled.save()
-
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-
-        class_canceled = ClassCanceled.objects.get(
-            id=instance.class_canceled_id.id)
-        class_canceled.quantity_available += instance.quantity
-        class_canceled.save()
-
-        instance.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    #     headers = self.get_success_headers(serializer.data)
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

@@ -198,28 +198,68 @@ class TemporaryClassSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TemporaryClass
-        fields = ['id', 'class_canceled_id', 'quantity', 'teacher_id', 'teacher', 'discipline_id', 'discipline']
+        fields = ['id', 'class_canceled_id', 'teacher_id', 'teacher', 'discipline_id', 'discipline']
 
     def show_discipline(self, instance):
-        discipline = Discipline.objects.get(id=instance['discipline_id'].id)
+        try:
+            discipline = Discipline.objects.get(id=instance.discipline_id.id)
+
+            serializer = DisciplineSerializer(discipline)
+
+            return serializer.data
+        except:
+            return None
+    
+    def show_teacher(self, instance):
+        try:
+            discipline = Teacher.objects.get(id=instance['teacher_id'].id)
+
+            serializer = TeacherSerializer(discipline)
+
+            return serializer.data
+        except:
+            return None
+
+class ClassCanceledScheduleSerializer(serializers.ModelSerializer):
+    schedule_class = serializers.SerializerMethodField('show_class', required=False)
+    discipline = serializers.SerializerMethodField('show_discipline', required=False)
+    requested_by = serializers.SerializerMethodField('show_requested_by', required=False)
+    
+    class Meta:
+        model = Schedule
+        fields = ['id', 'quantity', 'weekday', 'start_time','end_time', 'class_id','discipline_id', 'discipline', 'schedule_class', 'requested_by']
+
+    def show_class(self, instance):
+        serializer = ClassSerializer(instance.class_id)
+
+        return serializer.data
+
+    def show_discipline(self, instance):
+        discipline = Discipline.objects.get(id=instance.discipline_id.id)
 
         serializer = DisciplineSerializer(discipline)
 
         return serializer.data
     
-    def show_teacher(self, instance):
-        discipline = Teacher.objects.get(id=instance['teacher_id'].id)
+    def show_requested_by(self, instance):
+        teacher = Teacher.objects.get(id=self.context['teacher_id'])
 
-        serializer = TeacherSerializer(discipline)
+        serializer = TeacherSerializer(teacher)
 
         return serializer.data
 
-
 class ClassCanceledSerializer(serializers.ModelSerializer):
+    schedule = serializers.SerializerMethodField('show_schedule')
     class Meta:
         model = ClassCanceled
-        fields = ['id', 'schedule_id', 'canceled_date', 'reason',
-                  'is_available', 'quantity_available', 'teacher_ids']
+        fields = ['id', 'schedule_id', 'schedule', 'canceled_date', 'reason', 'canceled_by', 'teacher_to_replace', 'replace_class_status']
+
+    def show_schedule(self, instance):
+        schedule = Schedule.objects.get(id=instance.schedule_id.id)
+        
+        serializer = ClassCanceledScheduleSerializer(schedule, context={ 'teacher_id': instance.canceled_by })
+        
+        return serializer.data
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
@@ -253,9 +293,6 @@ class ScheduleSerializer(serializers.ModelSerializer):
         serializer = ClassSerializer(instance.class_id)
 
         return serializer.data
-
-    def without_results(self, instance):
-        return None
 
     def show_class_date(self, instance):
         try:
@@ -304,8 +341,6 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
         classes_to_replace = TemporaryClass.objects.filter(class_canceled_id__id__in=canceled_schedules)
         
-        
-
         week_replaced_classes = []
 
         for schedule in classes_to_replace.values():
