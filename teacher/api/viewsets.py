@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from ..models import Teacher
 
 from course.models import Discipline, Class, Teach, Schedule, CourseDiscipline, ClassCanceled, TemporaryClass
-from course.api.serializers import DisciplineWithTeachSerializer, ClassSerializer, ScheduleSerializer, TeacherDisciplineSerializer
+from course.api.serializers import ClassCanceledSerializer, ClassSerializer, ScheduleSerializer, TeacherDisciplineSerializer
 
 from .serializers import TeacherSerializer
 from course.api.serializers import TeachSerializer
@@ -94,6 +94,14 @@ class TeacherViewSet(ModelViewSet):
         serializer = ScheduleSerializer(month_schedules, many=True, context={'request': request})
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(methods=['GET'], detail=False, url_path='(?P<teacher_id>[^/.]+)/replace-classes')
+    def get_teacher_replace_classes(self, request, teacher_id):
+        canceled_classes = ClassCanceled.objects.filter(teacher_to_replace=teacher_id)
+
+        replace_classes = ClassCanceledSerializer(canceled_classes, many=True, context={'request': request})
+        
+        return Response(replace_classes.data, status=status.HTTP_200_OK)
 
 
 class TeacherDisciplinesViewSet(generics.ListAPIView):
