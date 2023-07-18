@@ -264,12 +264,21 @@ class ClassCanceledSerializer(serializers.ModelSerializer):
         fields = ['id', 'schedule_id', 'schedule', 'canceled_date', 'reason', 'canceled_by', 'teacher_to_replace', 'replace_class_status']
 
     def show_schedule(self, instance):
-        schedule = Schedule.objects.get(id=instance.schedule_id.id)
+        try:
+            schedule = Schedule.objects.get(id=instance['schedule_id'].id)
         
-        serializer = ClassCanceledScheduleSerializer(schedule, context={ 'teacher_id': instance.canceled_by })
+            serializer = ClassCanceledScheduleSerializer(schedule, context={ 'teacher_id': instance.canceled_by })
+            
+            return serializer.data
+        except:
+            try:
+                schedule = Schedule.objects.get(id=instance.schedule_id.id)
         
-        return serializer.data
-
+                serializer = ClassCanceledScheduleSerializer(schedule, context={ 'teacher_id': instance.canceled_by })
+                
+                return serializer.data
+            except:
+                return None
 
 class ScheduleSerializer(serializers.ModelSerializer):
     discipline = serializers.SerializerMethodField(
@@ -310,8 +319,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
             return None
 
     def show_canceled_classes(self, instance):
-        canceled_schedules = ClassCanceled.objects.filter(
-            schedule_id=instance.id)
+        canceled_schedules = ClassCanceled.objects.filter(schedule_id=instance.id)
 
         reference_date = datetime.strptime(self.context['request'].query_params['date'], '%d/%m/%Y').date(
         ) if 'date' in self.context['request'].query_params else date.today()
