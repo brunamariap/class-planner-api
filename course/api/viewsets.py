@@ -300,7 +300,7 @@ class ClassViewSet(ModelViewSet):
                     week_schedules.append(copy_of_schedule)
 
         serializer = ScheduleSerializer(
-            week_schedules, many=True)
+            week_schedules, many=True, context={ 'request': request })
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
