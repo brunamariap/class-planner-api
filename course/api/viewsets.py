@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status, generics
 
 from ..models import Course, Class, Discipline, CourseDiscipline, Schedule, TemporaryClass, ClassCanceled, Teach
-from .serializers import CourseSerializer, ClassSerializer, CourseClassesSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer, DisciplineWithTeachSerializer
+from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer, DisciplineWithTeachSerializer
 
 from student.models import Student
 from student.api.serializers import ClassStudentsSerializer
@@ -385,16 +385,24 @@ class ScheduleViewSet(ModelViewSet):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    @action(methods=['DELETE'], detail=False, url_path='canceled/(?P<class_canceled_id>[^/.]+)')
+    @action(methods=['PATCH','DELETE'], detail=False, url_path='canceled/(?P<class_canceled_id>[^/.]+)')
     def cancel_class_cancellation(self, request, class_canceled_id):
-        try:
-            class_canceled = ClassCanceled.objects.get(id=class_canceled_id)
-            class_canceled.delete()
+        if request.method == 'DELETE':
+            try:
+                class_canceled = ClassCanceled.objects.get(id=class_canceled_id)
+                class_canceled.delete()
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except:
-            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            except:
+                return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            instance = ClassCanceled.objects.get(id=class_canceled_id)
+            
+            serializer = ClassCanceledSerializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
+            return Response(serializer.data,status=status.HTTP_204_NO_CONTENT)
 
 class TemporaryClassViewSet(ModelViewSet):
     queryset = TemporaryClass.objects.all()
