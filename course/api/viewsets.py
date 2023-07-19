@@ -43,7 +43,7 @@ class CourseViewSet(ModelViewSet):
     def get_classes_of_courses(self, request, course_id, *args, **kwargs):
         try:
             classes = Class.objects.filter(course_id=course_id)
-            serializer = CourseClassesSerializer(classes, many=True)
+            serializer = ClassSerializer(classes, many=True)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:

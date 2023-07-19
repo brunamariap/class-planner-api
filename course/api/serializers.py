@@ -37,13 +37,7 @@ class CourseDisciplinePeriodSerializer(serializers.ModelSerializer):
         serializer = CourseDisciplineSerializer(discipline)
 
         return serializer.data
-
-
-class CourseClassesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Class
-        fields = ['id', 'reference_period', 'shift', 'class_leader_id']
-
+    
 
 class DisciplineSerializer(serializers.ModelSerializer):
     course = serializers.SerializerMethodField('show_course_period')
