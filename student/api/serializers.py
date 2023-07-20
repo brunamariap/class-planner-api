@@ -20,11 +20,6 @@ class StudentSerializer(serializers.ModelSerializer):
         except:
             return None
 
-class ClassStudentsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Student
-        fields = ['id', 'name', 'registration', 'avatar', 'disciplines']
-
 
 class StudentAlertSerializer(serializers.ModelSerializer):
     student = serializers.SerializerMethodField('show_student')
