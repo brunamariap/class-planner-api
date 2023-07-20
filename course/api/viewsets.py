@@ -7,7 +7,7 @@ from ..models import Course, Class, Discipline, CourseDiscipline, Schedule, Temp
 from .serializers import CourseSerializer, ClassSerializer, DisciplineSerializer, ScheduleSerializer, TemporaryClassSerializer, ClassCanceledSerializer, CourseDisciplinePeriodSerializer, DisciplineWithTeachSerializer
 
 from student.models import Student
-from student.api.serializers import ClassStudentsSerializer
+from student.api.serializers import StudentSerializer
 
 from utils.generate_month_days import get_days_from_month
 from utils.report_canceled_class import report_canceled_class
@@ -274,7 +274,7 @@ class ClassViewSet(ModelViewSet):
     def get_class_students(self, request, class_id):
         try:
             students = Student.objects.filter(class_id=class_id)
-            serializer = ClassStudentsSerializer(students, many=True)
+            serializer = StudentSerializer(students, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
