@@ -105,11 +105,13 @@ class TeacherViewSet(ModelViewSet):
     
     @action(methods=['GET'], detail=False, url_path='byregistration/(?P<teacher_registration>[^/.]+)')
     def get_teacher_by_registration(self, request, teacher_registration):
-        teacher = Teacher.objects.get(registration=teacher_registration)
-
-        serializer = TeacherSerializer(teacher)
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            teacher = Teacher.objects.get(registration=teacher_registration)
+            serializer = TeacherSerializer(teacher)
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response({'details': 'Não encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class TeacherDisciplinesViewSet(generics.ListAPIView):
