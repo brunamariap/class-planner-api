@@ -204,6 +204,7 @@ class TemporaryClassSerializer(serializers.ModelSerializer):
         fields = ['id', 'class_canceled_id', 'teacher_id', 'teacher', 'discipline_id', 'discipline']
 
     def show_discipline(self, instance):
+        
         try:
             discipline = Discipline.objects.get(id=instance.discipline_id.id)
 
@@ -211,7 +212,14 @@ class TemporaryClassSerializer(serializers.ModelSerializer):
 
             return serializer.data
         except:
-            return None
+            try:
+                discipline = Discipline.objects.get(id=instance['discipline_id'].id)
+
+                serializer = DisciplineSerializer(discipline)
+
+                return serializer.data
+            except:
+                return None
     
     def show_teacher(self, instance):
         try:
