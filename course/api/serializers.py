@@ -14,8 +14,7 @@ class CourseSerializer(serializers.ModelSerializer):
 class CourseDisciplineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Discipline
-        fields = ['id', 'name', 'code', 'workload_in_class',
-                  'workload_in_clock', 'is_optional']
+        fields = ['id', 'name', 'code', 'workload_in_class', 'workload_in_clock', 'is_optional']
 
 
 class CourseDisciplinePeriodSerializer(serializers.ModelSerializer):
