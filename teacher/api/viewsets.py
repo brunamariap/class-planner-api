@@ -102,6 +102,14 @@ class TeacherViewSet(ModelViewSet):
         replace_classes = ClassCanceledSerializer(canceled_classes, many=True, context={'request': request})
         
         return Response(replace_classes.data, status=status.HTTP_200_OK)
+    
+    @action(methods=['GET'], detail=False, url_path='byregistration/(?P<teacher_registration>[^/.]+)')
+    def get_teacher_by_registration(self, request, teacher_registration):
+        teacher = Teacher.objects.get(registration=teacher_registration)
+
+        serializer = TeacherSerializer(teacher)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TeacherDisciplinesViewSet(generics.ListAPIView):
