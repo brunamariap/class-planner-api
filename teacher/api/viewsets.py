@@ -51,7 +51,8 @@ class TeacherViewSet(ModelViewSet):
 
         week_schedules = []
         today_date = datetime.strptime(request.query_params['date'], '%d/%m/%Y').date() if 'date' in request.query_params else date.today()
-
+        today_date += timedelta(days=1)
+        
         for day in range(5):
             today = today_date.weekday()  # Obtém o número do dia da semana atual
             days_diff = day - today  # Calcula a diferença de dias
