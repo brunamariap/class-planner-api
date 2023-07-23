@@ -90,31 +90,28 @@ class DisciplineViewSet(ModelViewSet):
     serializer_class = DisciplineSerializer
 
     def create(self, request, *args, **kwargs):
-        try:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            associations_with_discipline = request.data['course']
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        associations_with_discipline = request.data['course']
 
-            for i in range(len(associations_with_discipline)):
-                course_link_already_exists = CourseDiscipline.objects.filter(discipline_id=Discipline.objects.last(),
-                                                                             course_id=Course.objects.get(
-                    id=request.data['course'][i]['course_id']))
-
-                if not course_link_already_exists:
-                    create_course_link = CourseDiscipline.objects.create(discipline_id=Discipline.objects.last(),
+        for i in range(len(associations_with_discipline)):
+            course_link_already_exists = CourseDiscipline.objects.filter(discipline_id=Discipline.objects.last(),
                                                                          course_id=Course.objects.get(
-                        id=request.data['course'][i]['course_id']),
-                        period=request.data['course'][i]['period'])
-                    create_course_link.save()
+                id=request.data['course'][i]['course_id']))
 
-                """ if course_link_already_exists:
+            if not course_link_already_exists:
+                create_course_link = CourseDiscipline.objects.create(discipline_id=Discipline.objects.last(),
+                                                                     course_id=Course.objects.get(
+                    id=request.data['course'][i]['course_id']),
+                    period=request.data['course'][i]['period'])
+                create_course_link.save()
+
+            """ if course_link_already_exists:
                     return Response({"message": "A associação dessa disciplina com esse curso já existe"}, status=status.HTTP_400_BAD_REQUEST) """
 
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        except:
-            return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
         try:
@@ -171,7 +168,7 @@ class ImportDisciplineGenericView(generics.CreateAPIView):
             for discipline in disciplines_json_list:
                 period = None if discipline['Período'] == '-' else int(
                     discipline['Período'])
-                
+
                 try:
                     workload_in_class = int(discipline['CH Componente'][-3:])
                 except:
@@ -300,7 +297,7 @@ class ClassViewSet(ModelViewSet):
                     week_schedules.append(copy_of_schedule)
 
         serializer = ScheduleSerializer(
-            week_schedules, many=True, context={ 'request': request })
+            week_schedules, many=True, context={'request': request})
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -385,11 +382,12 @@ class ScheduleViewSet(ModelViewSet):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    @action(methods=['PATCH','DELETE'], detail=False, url_path='canceled/(?P<class_canceled_id>[^/.]+)')
+    @action(methods=['PATCH', 'DELETE'], detail=False, url_path='canceled/(?P<class_canceled_id>[^/.]+)')
     def cancel_class_cancellation(self, request, class_canceled_id):
         if request.method == 'DELETE':
             try:
-                class_canceled = ClassCanceled.objects.get(id=class_canceled_id)
+                class_canceled = ClassCanceled.objects.get(
+                    id=class_canceled_id)
                 class_canceled.delete()
 
                 return Response(status=status.HTTP_204_NO_CONTENT)
@@ -397,12 +395,14 @@ class ScheduleViewSet(ModelViewSet):
                 return Response({"message": "Ocorreu um erro ao tentar esta funcionalidade"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             instance = ClassCanceled.objects.get(id=class_canceled_id)
-            
-            serializer = ClassCanceledSerializer(instance, data=request.data, partial=True)
+
+            serializer = ClassCanceledSerializer(
+                instance, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
 
-            return Response(serializer.data,status=status.HTTP_204_NO_CONTENT)
+            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+
 
 class TemporaryClassViewSet(ModelViewSet):
     queryset = TemporaryClass.objects.all()
