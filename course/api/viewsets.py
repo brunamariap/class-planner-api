@@ -128,7 +128,7 @@ class DisciplineViewSet(ModelViewSet):
             len(courses_associated_with_discipline)
 
             for i in range(associations_with_discipline):
-                course_link_already_exists = True if request.data['course'][i]['course_id'] in courses_associated_with_discipline.values_list(
+                course_link_already_exists = True if int(request.data['course'][i]['course_id']) in courses_associated_with_discipline.values_list(
                     'course_id', flat=True) else None
 
                 if not course_link_already_exists:
@@ -139,9 +139,8 @@ class DisciplineViewSet(ModelViewSet):
                     create_course_link.save()
                 else:
                     if courses_associated_with_discipline[i].period != request.data['course'][i]['period']:
-                        with transaction.atomic():
-                            courses_associated_with_discipline[i].period = request.data['course'][i]['period']
-                            courses_associated_with_discipline[i].save()
+                        courses_associated_with_discipline[i].period = request.data['course'][i]['period']
+                        courses_associated_with_discipline[i].save()
 
             if getattr(instance, '_prefetched_objects_cache', None):
                 # If 'prefetch_related' has been applied to a queryset, we need to
