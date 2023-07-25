@@ -183,15 +183,27 @@ class DisciplineWithTeachSerializer(serializers.ModelSerializer):
 
 class ClassSerializer(serializers.ModelSerializer):
     course = serializers.SerializerMethodField('show_course')
+    class_leader = serializers.SerializerMethodField('show_class_leader')
 
     class Meta:
         model = Class
-        fields = ['id', 'course_id', 'course', 'reference_period', 'shift', 'class_leader_id', ]
+        fields = ['id', 'course_id', 'course', 'reference_period', 'shift', 'class_leader_id', 'class_leader']
 
     def show_course(self, instance):
         course = Course.objects.get(id=instance.course_id.id)
         serializer = CourseSerializer(course)
         return serializer.data
+
+    def show_class_leader(self, instance):
+        from student.api.serializers import StudentSerializer
+        from student.models import Student
+
+        if (instance.class_leader_id):
+            student = Student.objects.get(id=int(instance.class_leader_id))
+            serializer = StudentSerializer(student)
+            return serializer.data
+
+        return None
 
 
 class TemporaryClassSerializer(serializers.ModelSerializer):
