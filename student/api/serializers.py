@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from course.api.serializers import DisciplineSerializer, TeacherSerializer, ClassSerializer
+from course.api.serializers import DisciplineSerializer, TeacherSerializer, ClassSerializer, StudentClassSerializer
 from course.models import Discipline, CourseDiscipline, Teach, Teacher, Class
 from ..models import Student, StudentAlert
 
@@ -7,16 +7,18 @@ from ..models import Student, StudentAlert
 class StudentSerializer(serializers.ModelSerializer):
     disciplines = serializers.SlugRelatedField(queryset=Discipline.objects.all(), slug_field='code', required=False, many=True)
     student_class = serializers.SerializerMethodField('show_class')
+
     class Meta:
         model = Student
-        fields = ['id','class_id', 'name', 'registration', 'avatar', 'email','student_class', 'disciplines']
+        fields = ['id','class_id', 'name', 'registration', 'avatar', 'email', 'student_class', 'disciplines']
 
     def show_class(self, instance):
         try:
             student_class = Class.objects.get(id=instance.class_id.id)
-            serializer = ClassSerializer(student_class)
+            serializer = StudentClassSerializer(student_class)
+            data = serializer.data
             
-            return serializer.data
+            return data
         except:
             return None
 
