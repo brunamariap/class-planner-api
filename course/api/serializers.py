@@ -195,15 +195,18 @@ class ClassSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def show_class_leader(self, instance):
-        from student.api.serializers import StudentSerializer
-        from student.models import Student
+        try:
+            from student.api.serializers import StudentSerializer
+            from student.models import Student
 
-        if (instance.class_leader_id):
-            student = Student.objects.get(id=int(instance.class_leader_id))
-            serializer = StudentSerializer(student)
-            return serializer.data
+            if (instance.class_leader_id):
+                student = Student.objects.get(id=int(instance.class_leader_id))
+                serializer = StudentSerializer(student)
+                return serializer.data
 
-        return None
+            return None
+        except:
+            return None
 
 
 class TemporaryClassSerializer(serializers.ModelSerializer):

@@ -8,7 +8,7 @@ class Student(models.Model):
 
     registration = models.CharField(max_length=32, unique=True)
     name = models.CharField(max_length=200)
-    avatar = models.ImageField(null=True)
+    avatar = models.CharField(max_length=200, null=True)
     email = models.EmailField(max_length=254)
     class_id = models.ForeignKey(Class, on_delete=models.CASCADE, db_column='class_id')
     disciplines = models.ManyToManyField(Discipline) 
