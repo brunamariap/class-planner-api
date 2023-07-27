@@ -34,8 +34,7 @@ Projeto desenvolvido na disciplina de Desenvolvimento de Projetos II, utilizando
 
 ## Tecnologias utilizadas
 
-- Next.js
-- TailwindCSS
+- Django Rest Framework
 
 ## Instalação
 
