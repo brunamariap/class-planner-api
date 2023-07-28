@@ -14,7 +14,7 @@ Este projeto funciona juntamente com outras duas aplicações:
 
 ## ⚠️ Importante
 
-Equipe: Felippe Rian & [Bruna Maria](https://github.com/brunamariap)
+Equipe: [Felippe Rian](https://github.com/ImFelippe365) & Bruna Maria
 
 Projeto desenvolvido na disciplina de Desenvolvimento de Projetos II, utilizando os conhecimentos adquiridos nas demais, como Administração de Banco de Dados, Processo de Software, Arquitetura de Software e Desenvolvimento de Sistemas Distribuídos.
 
